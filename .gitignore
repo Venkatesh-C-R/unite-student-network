@@ -1,0 +1,23 @@
+# Dependencies and builds
+node_modules/
+dist/
+
+# Secrets: database password, session secret, mail API keys
+.env
+.env.*
+
+# Uploaded evidence files (backend/.gitignore keeps uploads/.gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Third-party Claude skills (reinstall from github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+.claude/skills/
+# Personal Claude Code settings
+.claude/settings.local.json
+
+# OS and editor files
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

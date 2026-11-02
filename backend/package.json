@@ -1,0 +1,31 @@
+{
+  "name": "unite-backend",
+  "version": "0.1.0",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node --env-file=.env.test --test --test-concurrency=1 'test/**/*.test.js'",
+    "dev": "node --watch --env-file=.env src/server.js",
+    "start": "node --env-file=.env src/server.js",
+    "db:setup": "node --env-file=.env scripts/setup-db.js",
+    "staff": "node --env-file=.env scripts/create-staff.js",
+    "seed:demo": "node --env-file=.env scripts/seed-demo.js"
+  },
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express": "^5.3.0",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^8.7.2",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "multer": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.1"
+  }
+}
