@@ -275,3 +275,19 @@ CREATE TABLE IF NOT EXISTS notification (
   INDEX ix_notif_user (user_id, read_at),
   CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- Who did what, when and from where. Kept when the user is deleted (user_id becomes NULL).
+CREATE TABLE IF NOT EXISTS activity_log (
+  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT UNSIGNED NULL,
+  action       VARCHAR(40) NOT NULL,
+  target_type  VARCHAR(20) NULL,
+  target_id    INT UNSIGNED NULL,
+  details      VARCHAR(300) NULL,
+  ip           VARCHAR(45) NULL,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX ix_activity_time (created_at),
+  INDEX ix_activity_user (user_id, created_at),
+  INDEX ix_activity_action (action, created_at),
+  CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE SET NULL
+) ENGINE=InnoDB;

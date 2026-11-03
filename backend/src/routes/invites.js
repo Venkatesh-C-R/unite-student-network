@@ -6,6 +6,7 @@ import { notify } from '../lib/notify.js'
 import { id } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
 import { assertCanJoin, insertMember, lockGroup } from '../services/groups.js'
+import { logActivity } from '../lib/activity.js'
 
 // Union invites the signed-in student has received
 export const invitesRouter = Router()
@@ -48,5 +49,6 @@ invitesRouter.post('/:id/:decision', async (req, res) => {
     const group = await one('SELECT name FROM collab_group WHERE id = ?', [invite.group_id])
     await notify(invite.inviter_id, 'invite_accepted', `${req.user.name} joined ${group.name}.`, `/groups/${invite.group_id}`)
   }
+  await logActivity(req, p.decision === 'accept' ? 'invite_accepted' : 'invite_declined', { targetType: 'union', targetId: invite.group_id })
   res.json({ ok: true, groupId: invite.group_id })
 })

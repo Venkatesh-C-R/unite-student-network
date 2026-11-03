@@ -7,6 +7,7 @@ import { id, text } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
 import { isBlocked } from './people.js'
 import { addMember, assertCanJoin, insertMember, lockGroup, MAX_GROUP_SIZE, membership } from '../services/groups.js'
+import { logActivity } from '../lib/activity.js'
 
 // Roles that run a union day to day: the leader (owner) and the second in command (deputy)
 const LEADS = ['owner', 'deputy']
@@ -109,6 +110,7 @@ groupsRouter.post('/', requireRole('student'), async (req, res) => {
     await addMember(conn, r.insertId, req.user.id, 'owner')
     return r.insertId
   })
+  await logActivity(req, 'union_created', { targetType: 'union', targetId: groupId, details: body.name })
   res.status(201).json({ group: { id: groupId, name: body.name, description: body.description }, members: await members(groupId) })
 })
 
@@ -164,6 +166,7 @@ groupsRouter.post('/:id/join-requests', requireRole('student'), async (req, res)
   })
   const owners = await all(`SELECT user_id FROM group_member WHERE group_id = ? AND role IN ('owner', 'deputy')`, [groupId])
   await notify(owners.map((o) => o.user_id), 'join_request', `${req.user.name} asked to join your group.`, `/groups/${groupId}`)
+  await logActivity(req, 'join_requested', { targetType: 'union', targetId: groupId })
   res.status(201).json({ request: { id: requestId, status: 'pending' } })
 })
 
@@ -206,6 +209,11 @@ groupsRouter.post('/:id/join-requests/:requestId/:decision', requireRole('studen
     p.decision === 'approve' ? `You are now a member of ${group.name}.` : `Your request to join ${group.name} was not accepted.`,
     `/groups/${p.id}`,
   )
+  await logActivity(req, p.decision === 'approve' ? 'join_approved' : 'join_rejected', {
+    targetType: 'union',
+    targetId: p.id,
+    details: `student #${request.user_id}`,
+  })
   res.json({ ok: true, members: await members(p.id) })
 })
 
@@ -229,6 +237,11 @@ groupsRouter.delete('/:id/members/:userId', requireRole('student'), async (req, 
       else await conn.query('DELETE FROM collab_group WHERE id = ?', [p.id])
     }
   })
+  await logActivity(req, targetId === req.user.id ? 'union_left' : 'member_removed', {
+    targetType: 'union',
+    targetId: p.id,
+    details: targetId === req.user.id ? null : `student #${targetId}`,
+  })
   res.json({ ok: true })
 })
 
@@ -247,6 +260,7 @@ groupsRouter.put('/:id/deputy', requireRole('student'), async (req, res) => {
     const group = await one('SELECT name FROM collab_group WHERE id = ?', [groupId])
     await notify(userId, 'deputy', `You are now second in command of ${group.name}.`, `/groups/${groupId}`)
   }
+  await logActivity(req, 'deputy_changed', { targetType: 'union', targetId: groupId, details: userId ? `student #${userId}` : 'cleared' })
   res.json({ ok: true, members: await members(groupId) })
 })
 
@@ -272,5 +286,6 @@ groupsRouter.post('/:id/invites', requireRole('student'), async (req, res) => {
   })
   const group = await one('SELECT name FROM collab_group WHERE id = ?', [groupId])
   await notify(userId, 'union_invite', `${req.user.name} invited you to join ${group.name}.`, '/groups')
+  await logActivity(req, 'invite_sent', { targetType: 'union', targetId: groupId, details: `student #${userId}` })
   res.status(201).json({ invite: { id: inviteId, status: 'pending' } })
 })

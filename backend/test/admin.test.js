@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
-import { P, PASSWORD, signedIn, startApp, stopApp } from './helpers.js'
+import { P, PASSWORD, agent, signedIn, startApp, stopApp } from './helpers.js'
 
 let app
 before(async () => {
@@ -62,4 +62,23 @@ test('role changes keep groups valid', async () => {
   assert.equal((await admin.agent.post(`/api/admin/users/${free.id}/role`).send({ role: 'faculty' })).status, 200)
   const found = (await admin.agent.get('/api/admin/users?role=faculty').query({ q: free.email })).body.users
   assert.equal(found[0].role, 'faculty')
+})
+
+test('activity log records sign-ins, claims and admin actions; only admins can read it', async () => {
+  const admin = await signedIn(app, { role: 'admin' })
+  const student = await signedIn(app, { programmeId: P.BE_EEE, name: 'Logged Lakshmi' })
+  await agent(app).post('/api/auth/login').send({ email: student.email, password: 'wrong-password' })
+  await admin.agent.post(`/api/admin/users/${student.id}/active`).send({ active: false })
+
+  const res = await admin.agent.get('/api/admin/activity').query({ q: 'Logged Lakshmi' })
+  assert.equal(res.status, 200)
+  const actions = res.body.activity.map((a) => a.action)
+  assert.ok(actions.includes('login'), actions)
+  assert.ok(actions.includes('login_failed'), actions)
+
+  const suspended = await admin.agent.get('/api/admin/activity').query({ action: 'user_suspended' })
+  assert.ok(suspended.body.activity.some((a) => a.targetId === student.id && a.userId === admin.id))
+  assert.equal((await student.agent.get('/api/admin/activity')).status, 401)
+  const faculty = await signedIn(app, { role: 'faculty' })
+  assert.equal((await faculty.agent.get('/api/admin/activity')).status, 403)
 })

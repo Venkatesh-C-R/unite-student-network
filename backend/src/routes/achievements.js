@@ -8,6 +8,7 @@ import { scoreFor } from '../lib/scoring.js'
 import { evidenceUpload, removeFiles, uploadDir, verifyFiles } from '../lib/uploads.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole, requireUser } from '../middleware/auth.js'
+import { logActivity } from '../lib/activity.js'
 
 export const achievementsRouter = Router()
 
@@ -93,6 +94,7 @@ achievementsRouter.post('/achievements', requireRole('student'), evidenceUpload,
     })
     const reviewers = await all(`SELECT id FROM user_account WHERE role IN ('faculty','admin') AND is_active`)
     await notify(reviewers.map((r) => r.id), 'review_needed', 'A new achievement is waiting for review.', `/review/${achievementId}`)
+    await logActivity(req, 'claim_submitted', { targetType: 'claim', targetId: achievementId, details: `result ${body.result}` })
     const [created] = await withDetails(await all(`${ACH_SELECT} WHERE a.id = ?`, [achievementId]))
     res.status(201).json({ achievement: created })
   } catch (e) {
@@ -214,6 +216,11 @@ achievementsRouter.post('/review/achievements/:id', requireRole('faculty', 'admi
       : `Your claim for ${outcome.a.title} was not approved: ${body.note}`,
     `/achievements/${achId}`,
   )
+  await logActivity(req, body.decision === 'approve' ? 'claim_approved' : 'claim_rejected', {
+    targetType: 'claim',
+    targetId: achId,
+    details: body.decision === 'approve' ? `+${outcome.points} pts` : body.note,
+  })
   const [row] = await withDetails(await all(`${ACH_SELECT} WHERE a.id = ?`, [achId]))
   res.json({ achievement: row })
 })
