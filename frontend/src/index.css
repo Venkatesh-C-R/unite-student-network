@@ -116,3 +116,4 @@ html.lenis body { height: auto; }
 /* UNITE wordmark in the poster colours: red on light, cream on dark */
 .wordmark { color: #c8231f; letter-spacing: 0.08em; text-transform: uppercase; }
 [data-theme="dark"] .wordmark { color: #e9d8b4; }
+.nav-red .wordmark { color: #fffaf0; }

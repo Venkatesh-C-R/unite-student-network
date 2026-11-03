@@ -246,15 +246,15 @@ export default function GroupsPage() {
         {isStudent && (
           <dl className="relative mt-6 grid grid-cols-3 gap-3">
             {[
-              ['My unions', mine ? mine.groups.length : '–', Users],
+              ['My union', mine ? mine.groups[0]?.name || 'None yet' : '–', Users],
               ['Requests to review', mine ? ownerInbox : '–', Inbox],
-              ['Points (my unions)', mine ? formatPoints(totalPoints) : '–', Trophy],
+              ['Points (my union)', mine ? formatPoints(totalPoints) : '–', Trophy],
             ].map(([label, value, Icon]) => (
               <div key={label} className="rounded-2xl bg-violet-500/10 p-3 sm:p-4">
                 <dt className="flex items-center gap-1.5 text-[11px] text-muted sm:text-xs">
                   <Icon size={13} /> {label}
                 </dt>
-                <dd className="mt-1 font-display text-2xl font-bold">{value}</dd>
+                <dd className="mt-1 truncate font-display text-2xl font-bold" title={String(value)}>{value}</dd>
               </div>
             ))}
           </dl>
@@ -291,7 +291,7 @@ export default function GroupsPage() {
       <section aria-labelledby="mine-h">
         <div className="mb-4 flex items-end justify-between">
           <h2 id="mine-h" className="font-display text-2xl font-semibold">
-            My unions
+            My union
           </h2>
         </div>
         {!mine ? (
