@@ -7,7 +7,7 @@ Node.js + Express 5 + MySQL API for UNITE. Sessions are stored in MySQL (cookie 
 ```bash
 brew services start mysql      # MySQL must be running
 npm install
-npm run db:setup               # creates tables + loads the 44 programmes (safe to re-run)
+npm run db:setup               # creates tables + loads the 42 programmes (safe to re-run)
 npm run dev                    # http://localhost:4000, restarts on file changes
 npm test                       # 25 integration tests against the unite_test database
 npm run seed:demo              # optional: demo students, groups, a poll and points (dev database only)

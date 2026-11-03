@@ -39,8 +39,6 @@ const ABBR = {
   'Theoretical Computer Science': 'TCS',
   'Fashion Design & Merchandising': 'FDM',
   'Master of Computer Applications': '',
-  MBA: '',
-  'MBA (Waste Management & Social Entrepreneurship)': 'WM&SE',
 }
 
 export function shortProgramme(level, name) {

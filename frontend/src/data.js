@@ -43,8 +43,6 @@ export const PROGRAMMES = [
   { level: 'MSc', name: 'Theoretical Computer Science' },
   { level: 'MSc', name: 'Fashion Design & Merchandising' },
   { level: 'MCA', name: 'Master of Computer Applications' },
-  { level: 'MBA', name: 'MBA' },
-  { level: 'MBA', name: 'MBA (Waste Management & Social Entrepreneurship)' },
 ].map((p, i) => ({ ...p, id: i + 1, label: `${p.level} · ${p.name}` }))
 
 export const MAX_GROUP_SIZE = 6
@@ -84,7 +82,7 @@ export const DEMO_GROUPS = [
   },
   {
     name: 'Circuit Breakers',
-    programmes: ['BE EEE', 'BE ECE', 'ME CSE', 'BE Civil', 'MBA'],
+    programmes: ['BE EEE', 'BE ECE', 'ME CSE', 'BE Civil'],
     wins: [['1', 'state'], ['2', 'college'], ['p', 'national']],
   },
   {
@@ -118,7 +116,7 @@ export const DOWNLOADS = [
   { title: 'Project Abstract', desc: 'Four-page abstract: idea, end users, feasibility, modules and scoring.', file: 'UNITE_Abstract.pdf', type: 'PDF', size: '56 KB', pages: '4 pages' },
   { title: 'Design Document', desc: 'Requirements, flow diagram, database schema, use cases, modules and timeline.', file: 'UNITE_Design_Document.pdf', type: 'PDF', size: '384 KB', pages: '9 pages' },
   { title: 'Rules & Scoring Guide', desc: 'One-page summary of the six-member rule, host categories and the points table.', file: 'UNITE_Rules_and_Scoring_Guide.pdf', type: 'PDF', size: '176 KB', pages: '1 page' },
-  { title: 'Eligible Programmes', desc: 'Preliminary list of the 44 PSG programmes, grouped by degree level.', file: 'UNITE_Eligible_Programmes.pdf', type: 'PDF', size: '132 KB', pages: '1 page' },
+  { title: 'Eligible Programmes', desc: 'Preliminary list of the 42 PSG programmes, grouped by degree level.', file: 'UNITE_Eligible_Programmes.pdf', type: 'PDF', size: '132 KB', pages: '1 page' },
   { title: 'Database Schema', desc: 'Simplified eight-table overview of the UNITE database.', file: 'UNITE_Database_Schema.png', type: 'PNG', size: '114 KB', pages: 'Diagram' },
   { title: 'Use Case Diagram', desc: 'UML use cases for students and faculty / admin.', file: 'UNITE_Use_Case_Diagram.png', type: 'PNG', size: '122 KB', pages: 'Diagram' },
 ]
@@ -139,7 +137,7 @@ export const RULES = [
 ]
 
 export const FAQS = [
-  { q: 'Who can join UNITE?', a: 'Students of PSG College of Technology (and the eligible PSG Institute of Management programmes). Sign-up uses your college email, rollno@psgtech.ac.in. PhD and research programmes are not included for now.' },
+  { q: 'Who can join UNITE?', a: 'Students of PSG College of Technology. Sign-up uses your college email, rollno@psgtech.ac.in. PhD and research programmes are not included for now.' },
   { q: 'Why only one student per programme?', a: 'UNITE is built for interdisciplinary teamwork. One member per programme means every union mixes different skills — a designer, an engineer, a data scientist and more.' },
   { q: 'Can I switch to another union?', a: 'Yes. Leave your current union, then ask to join the new one. When a union accepts you, your other pending requests are cancelled.' },
   { q: 'Who is the leader?', a: 'Whoever creates the union. The leader can name one member as second in command and change that choice at any time.' },

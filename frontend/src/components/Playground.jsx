@@ -69,7 +69,7 @@ export default function Playground() {
                 onChange={(e) => setChoice(e.target.value)}
                 className="w-full rounded-2xl border border-line bg-surface-strong px-4 py-3.5 text-ink outline-none focus:border-violet-400"
               >
-                {['BE/BTech', 'BSc', 'ME/MTech', 'MSc', 'MCA', 'MBA'].map((lvl) => (
+                {['BE/BTech', 'BSc', 'ME/MTech', 'MSc', 'MCA'].map((lvl) => (
                   <optgroup key={lvl} label={lvl}>
                     {PROGRAMMES.filter((p) => p.level === lvl).map((p) => (
                       <option key={p.id} value={p.id}>

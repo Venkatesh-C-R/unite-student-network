@@ -54,7 +54,7 @@ const STUDENTS = [
   ['Sneha Iyer', 6], //  6 BE EEE
   ['Arjun Das', 7], //  7 BE ECE
   ['Nila Shankar', 22], //  8 ME CSE
-  ['Vikram Rao', 43], //  9 MBA
+  ['Vikram Rao', 1], //  9 BE Automobile
   ['Priya Lakshmi', 2], // 10 BE Biomedical
   ['Hari Krishnan', 4], // 11 BE CSE (same programme as Aarav)
   ['Divya Suresh', 30], // 12 ME VLSI
@@ -110,7 +110,7 @@ await withTransaction(async (conn) => {
     return g.insertId
   }
   // Every demo group has ≤ 6 members, each from a different programme
-  const nova = await group('Team Nova', 'Hackathon team mixing code, design and data. Looking for an MBA for pitching.', 1, [2, 3, 4, 5])
+  const nova = await group('Team Nova', 'Hackathon team mixing code, design and data. Looking for an automobile engineer.', 1, [2, 3, 4, 5])
   const circuit = await group('Circuit Breakers', 'Hardware + software builds: IoT, embedded and smart-campus ideas.', 7, [6, 8])
   const bio = await group('Bio Bytes', 'Healthcare tech — medical devices meet machine learning.', 10, [12])
 

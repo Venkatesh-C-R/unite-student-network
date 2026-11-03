@@ -56,7 +56,7 @@ test('the seventh member is rejected by the server', async () => {
   const g = await createGroup(owner)
   for (const p of [P.BE_MECH, P.BE_FT, P.MCA, P.MSC_DS, P.ME_VLSI]) await join(owner, await signedIn(app, { programmeId: p }), g)
   assert.equal(await memberCount(g), 6)
-  const seventh = await signedIn(app, { programmeId: P.MBA })
+  const seventh = await signedIn(app, { programmeId: P.AUTO })
   const r = await requestJoin(seventh, g)
   assert.equal(r.status, 409)
   assert.equal(r.body.error, 'group_full')
@@ -80,7 +80,7 @@ test('race: two approvals for the last slot — exactly one wins', async () => {
 
   // Two students from different programmes both have pending requests for the single open slot
   const r1 = await requestJoin(await signedIn(app, { programmeId: P.ME_VLSI }), g)
-  const r2 = await requestJoin(await signedIn(app, { programmeId: P.MBA }), g)
+  const r2 = await requestJoin(await signedIn(app, { programmeId: P.AUTO }), g)
   const results = await Promise.all([approve(owner, g, r1.body.request.id), approve(owner, g, r2.body.request.id)])
 
   assert.deepEqual(results.map((r) => r.status).sort(), [200, 409])
