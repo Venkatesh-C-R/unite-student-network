@@ -1,4 +1,4 @@
--- Preliminary 44-entry programme list (PhD / research excluded). Subject to confirmation.
+-- Preliminary 42-entry programme list (PhD / research excluded). Subject to confirmation.
 INSERT IGNORE INTO programme (id, level, name, institution) VALUES
 (1,  'BE/BTech', 'Automobile Engineering', 'PSG College of Technology'),
 (2,  'BE/BTech', 'Biomedical Engineering', 'PSG College of Technology'),
@@ -41,6 +41,7 @@ INSERT IGNORE INTO programme (id, level, name, institution) VALUES
 (39, 'MSc', 'Software Systems', 'PSG College of Technology'),
 (40, 'MSc', 'Theoretical Computer Science', 'PSG College of Technology'),
 (41, 'MSc', 'Fashion Design & Merchandising', 'PSG College of Technology'),
-(42, 'MCA', 'Master of Computer Applications', 'PSG College of Technology'),
-(43, 'MBA', 'MBA', 'PSG Institute of Management'),
-(44, 'MBA', 'MBA (Waste Management & Social Entrepreneurship)', 'PSG Institute of Management');
+(42, 'MCA', 'Master of Computer Applications', 'PSG College of Technology');
+
+-- The two MBA programmes (ids 43, 44) were dropped: no students enlist from them
+UPDATE programme SET is_active = FALSE WHERE id IN (43, 44);

@@ -10,7 +10,7 @@ import { pool } from '../src/db.js'
 const { values } = parseArgs({
   options: { email: { type: 'string' }, name: { type: 'string' }, role: { type: 'string', default: 'faculty' } },
 })
-if (!values.email || !values.name || !['faculty', 'admin'].includes(values.role)) {
+if (!values.email || !values.name || !['faculty', 'admin'].includes(values.role) || !/@psgtech\.ac\.in$/i.test(values.email)) {
   console.error('Usage: npm run staff -- --email you@psgtech.ac.in --name "Full Name" --role faculty|admin')
   process.exit(1)
 }

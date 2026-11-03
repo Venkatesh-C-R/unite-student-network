@@ -90,7 +90,7 @@ function ReviewForm({ claim, onDone }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">
           Approving awards <b>{formatPoints(points)} pts</b>
-          {claim.groups.length > 1 ? ` to each of ${claim.groups.length} groups` : ''}.
+          {claim.groups.length > 1 ? ` to each of ${claim.groups.length} unions` : ''}.
         </p>
         <div className="flex gap-2">
           {rejecting ? (
@@ -153,7 +153,7 @@ export default function ReviewPage() {
           Review <span className="text-gradient">claims</span>
         </h1>
         <p className="mt-1 max-w-2xl text-muted">
-          Check each result against its proof. Approving adds the points to every group in the team; rejecting needs a short reason the students will see.
+          Check each result against its proof. Approving adds the points to every union in the team; rejecting needs a short reason the students will see.
         </p>
       </section>
 

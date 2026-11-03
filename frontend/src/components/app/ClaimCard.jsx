@@ -93,7 +93,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
         </span>
         {claim.status === 'approved' && (
           <span className="font-semibold text-emerald-500">
-            +{formatPoints(claim.points)} pts {claim.groups.length > 1 ? 'to each group' : ''} · verified by {claim.reviewerName}
+            +{formatPoints(claim.points)} pts {claim.groups.length > 1 ? 'to each union' : ''} · verified by {claim.reviewerName}
           </span>
         )}
       </div>

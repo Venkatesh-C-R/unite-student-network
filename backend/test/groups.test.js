@@ -56,7 +56,7 @@ test('the seventh member is rejected by the server', async () => {
   const g = await createGroup(owner)
   for (const p of [P.BE_MECH, P.BE_FT, P.MCA, P.MSC_DS, P.ME_VLSI]) await join(owner, await signedIn(app, { programmeId: p }), g)
   assert.equal(await memberCount(g), 6)
-  const seventh = await signedIn(app, { programmeId: P.MBA })
+  const seventh = await signedIn(app, { programmeId: P.AUTO })
   const r = await requestJoin(seventh, g)
   assert.equal(r.status, 409)
   assert.equal(r.body.error, 'group_full')
@@ -80,7 +80,7 @@ test('race: two approvals for the last slot — exactly one wins', async () => {
 
   // Two students from different programmes both have pending requests for the single open slot
   const r1 = await requestJoin(await signedIn(app, { programmeId: P.ME_VLSI }), g)
-  const r2 = await requestJoin(await signedIn(app, { programmeId: P.MBA }), g)
+  const r2 = await requestJoin(await signedIn(app, { programmeId: P.AUTO }), g)
   const results = await Promise.all([approve(owner, g, r1.body.request.id), approve(owner, g, r2.body.request.id)])
 
   assert.deepEqual(results.map((r) => r.status).sort(), [200, 409])
@@ -131,4 +131,60 @@ test('blocking hides a student from discovery and ends the friendship', async ()
   const search = await a.agent.get('/api/students').query({ q: 'Blocked Person' })
   assert.equal(search.body.students.length, 0)
   assert.equal((await b.agent.get(`/api/students/${a.id}`)).status, 404)
+})
+
+test('second in command approves requests, cannot appoint, and takes over when the leader leaves', async () => {
+  const leader = await signedIn(app, { programmeId: P.BE_CSE })
+  const deputy = await signedIn(app, { programmeId: P.BE_MECH })
+  const g = await createGroup(leader)
+  await join(leader, deputy, g)
+  const set = await leader.agent.put(`/api/groups/${g}/deputy`).send({ userId: deputy.id })
+  assert.equal(set.status, 200, JSON.stringify(set.body))
+  assert.equal((await deputy.agent.put(`/api/groups/${g}/deputy`).send({ userId: null })).status, 403)
+
+  await join(deputy, await signedIn(app, { programmeId: P.MCA }), g)
+  assert.equal(await memberCount(g), 3)
+
+  assert.equal((await leader.agent.delete(`/api/groups/${g}/members/me`)).status, 200)
+  assert.equal((await deputy.agent.get(`/api/groups/${g}`)).body.myRole, 'owner')
+})
+
+test('a student can be in only one union, and joining cancels other requests', async () => {
+  const a = await signedIn(app, { programmeId: P.BE_CSE })
+  const b = await signedIn(app, { programmeId: P.BE_MECH })
+  const student = await signedIn(app, { programmeId: P.MCA })
+  const g1 = await createGroup(a, 'Union One')
+  const g2 = await createGroup(b, 'Union Two')
+  const r2 = await requestJoin(student, g2)
+  assert.equal(r2.status, 201)
+  await join(a, student, g1)
+
+  const again = await requestJoin(student, g2)
+  assert.equal(again.status, 409)
+  assert.equal(again.body.error, 'already_in_union')
+  assert.equal((await approve(b, g2, r2.body.request.id)).status, 404)
+  assert.equal((await student.agent.post('/api/groups').send({ name: 'Third' })).status, 409)
+})
+
+test('only the leader invites; the student accepts and joins', async () => {
+  const leader = await signedIn(app, { programmeId: P.BE_CSE })
+  const member = await signedIn(app, { programmeId: P.BE_MECH })
+  const invitee = await signedIn(app, { programmeId: P.MCA })
+  const sameProg = await signedIn(app, { programmeId: P.BE_CSE })
+  const g = await createGroup(leader)
+  await join(leader, member, g)
+
+  assert.equal((await member.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })).status, 403)
+  const inv = await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })
+  assert.equal(inv.status, 201, JSON.stringify(inv.body))
+  assert.equal((await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })).status, 409)
+  assert.equal((await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: sameProg.id })).body.error, 'programme_taken')
+  assert.equal((await invitee.agent.post(`/api/groups/${g}/invites`).send({ userId: sameProg.id })).status, 403)
+
+  const list = await invitee.agent.get('/api/invites')
+  assert.equal(list.body.invites.length, 1)
+  const ok = await invitee.agent.post(`/api/invites/${inv.body.invite.id}/accept`)
+  assert.equal(ok.status, 200, JSON.stringify(ok.body))
+  assert.equal(await memberCount(g), 3)
+  assert.equal((await invitee.agent.post(`/api/invites/${inv.body.invite.id}/accept`)).status, 404)
 })

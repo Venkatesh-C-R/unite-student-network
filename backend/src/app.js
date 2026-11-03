@@ -11,6 +11,7 @@ import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { eventsRouter } from './routes/events.js'
 import { groupsRouter } from './routes/groups.js'
+import { invitesRouter } from './routes/invites.js'
 import { peopleRouter } from './routes/people.js'
 import { pollsRouter } from './routes/polls.js'
 
@@ -46,6 +47,7 @@ export function createApp() {
   app.use('/api/auth', authRouter)
   app.use('/api', peopleRouter)
   app.use('/api/groups', groupsRouter)
+  app.use('/api/invites', invitesRouter)
   app.use('/api', pollsRouter)
   app.use('/api/events', eventsRouter)
   app.use('/api', achievementsRouter)

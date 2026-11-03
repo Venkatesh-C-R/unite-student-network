@@ -3,11 +3,11 @@ import { BadgeCheck, Search, ShieldCheck, Trophy, UserRound, Users, Vote } from 
 import { Reveal, SectionHeading } from './ui'
 
 const FEATURES = [
-  { icon: Users, title: 'Interdisciplinary groups', body: 'Create or join a group of up to six — one student from each programme. Every join is checked on the server, so the rules can’t be broken.', span: 'lg:col-span-2' },
+  { icon: Users, title: 'Interdisciplinary unions', body: 'Create or join a union of up to six — one student from each programme. Every join is checked on the server, so the rules can’t be broken.', span: 'lg:col-span-2' },
   { icon: UserRound, title: 'Simple profiles', body: 'Just About, Interests and Links — add GitHub, LinkedIn, LeetCode or any URL you like.' },
   { icon: Search, title: 'Discover & connect', body: 'Search students by programme and interests, then send a friend request. Friends can be from any programme.' },
-  { icon: Vote, title: 'Group polls', body: 'Decide meetups, roles and plans together. One vote per member, per poll.' },
-  { icon: Trophy, title: 'Group leaderboard', body: 'Points scale with where the event was hosted: College, State or National.' },
+  { icon: Vote, title: 'Union polls', body: 'Decide meetups, roles and plans together. One vote per member, per poll.' },
+  { icon: Trophy, title: 'Union leaderboard', body: 'Points scale with where the event was hosted: College, State or National.' },
   { icon: BadgeCheck, title: 'Verified achievements', body: 'Submit your result with a certificate or proof. Faculty approve or reject — only verified wins count.', span: 'lg:col-span-2' },
   { icon: ShieldCheck, title: 'Campus-only & safe', body: 'Sign up with your PSG email. Report or block anyone, any time.' },
 ]
@@ -51,7 +51,7 @@ export default function Features() {
   return (
     <section id="features" className="relative px-5 py-28">
       <div className="mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Features" title={<>Everything a team needs, <span className="text-gradient">nothing it doesn’t</span></>}>
+        <SectionHeading title={<>Everything a team needs, <span className="text-gradient">nothing it doesn’t</span></>}>
           No feeds, no noise. Just the tools to meet the right people, work together and get credit for it.
         </SectionHeading>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">

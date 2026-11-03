@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Check, CheckCircle2, Clock, Crown, Lock, LogOut, Pencil, Plus, Trophy, UserMinus, Vote, X } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, Clock, Crown, Lock, LogOut, Pencil, Plus, Shield, ShieldOff, Trophy, UserMinus, Vote, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { api } from '../api'
@@ -177,7 +177,7 @@ function EditGroupDialog({ open, onClose, group, onSaved }) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Edit group">
+    <Dialog open={open} onClose={onClose} title="Edit union">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label htmlFor="e-name" className="mb-1.5 block text-sm font-semibold">
@@ -283,7 +283,7 @@ export default function GroupDetail() {
 
   if (notFound)
     return (
-      <Empty icon={X} title="Group not found" action={<Link to="/groups" className={btn.primary}>Back to Groups</Link>}>
+      <Empty icon={X} title="Union not found" action={<Link to="/groups" className={btn.primary}>Back to Unions</Link>}>
         It may have been deleted when its last member left.
       </Empty>
     )
@@ -300,6 +300,7 @@ export default function GroupDetail() {
 
   const { group, members, myRole, maxSize, joinRequests = [] } = data
   const isOwner = myRole === 'owner'
+  const isLead = isOwner || myRole === 'deputy'
   const takenProgrammes = new Set(members.map((m) => m.programmeId))
   const full = members.length >= maxSize
   const myProgrammeTaken = takenProgrammes.has(user.programmeId)
@@ -307,7 +308,7 @@ export default function GroupDetail() {
   return (
     <div className="space-y-8">
       <Link to="/groups" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft size={16} /> All groups
+        <ArrowLeft size={16} /> All unions
       </Link>
 
       {/* Header */}
@@ -319,7 +320,7 @@ export default function GroupDetail() {
               <h1 className="font-display text-3xl font-bold break-words sm:text-4xl">{group.name}</h1>
               {myRole && (
                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isOwner ? 'bg-amber-400/15 text-amber-500' : 'bg-violet-500/15 text-violet-500'}`}>
-                  {isOwner ? 'You own this group' : 'Member'}
+                  {isOwner ? 'Leader' : myRole === 'deputy' ? 'Second in command' : 'Member'}
                 </span>
               )}
             </div>
@@ -346,14 +347,16 @@ export default function GroupDetail() {
               <button
                 onClick={() =>
                   setConfirm({
-                    title: 'Leave this group?',
+                    title: 'Leave this union?',
                     body:
                       isOwner && members.length > 1
-                        ? 'The longest-standing member will become the new owner.'
+                        ? members.some((m) => m.role === 'deputy')
+                          ? 'Your second in command will become the leader.'
+                          : 'The longest-standing member will become the leader.'
                         : isOwner
-                          ? 'You are the only member, so the group will be deleted.'
+                          ? 'You are the only member, so the union will be deleted.'
                           : 'You can ask to join again later if there is still room for your programme.',
-                    action: 'Leave group',
+                    action: 'Leave union',
                     run: async () => {
                       try {
                         await api(`/groups/${group.id}/members/me`, { method: 'DELETE' })
@@ -380,13 +383,13 @@ export default function GroupDetail() {
                   <Clock size={16} className="text-amber-500" /> Requested · Cancel
                 </button>
               ) : full ? (
-                <span className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">Group is full</span>
+                <span className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">Union is full</span>
               ) : myProgrammeTaken ? (
                 <span className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">Your programme is taken</span>
               ) : (
                 <button
                   disabled={busy === 'join'}
-                  onClick={() => act('join', () => api(`/groups/${group.id}/join-requests`, { method: 'POST', body: {} }), 'Request sent. The owner will review it.')}
+                  onClick={() => act('join', () => api(`/groups/${group.id}/join-requests`, { method: 'POST', body: {} }), 'Request sent.')}
                   className={btn.primary}
                 >
                   Ask to join
@@ -422,12 +425,30 @@ export default function GroupDetail() {
                           {m.name}
                         </Link>
                         {m.id === user.id && <span className="text-xs font-normal text-muted">(you)</span>}
-                        {m.role === 'owner' && <Crown size={14} className="shrink-0 text-amber-500" aria-label="Owner" />}
+                        {m.role === 'owner' && <Crown size={14} className="shrink-0 text-amber-500" aria-label="Leader" />}
+                        {m.role === 'deputy' && <Shield size={14} className="shrink-0 text-violet-500" aria-label="Second in command" />}
                       </p>
                       <p className="truncate text-xs text-muted" title={`${m.programmeLevel} · ${m.programmeName}`}>
                         {m.programmeLevel} · {m.programmeName}
                       </p>
                     </div>
+                    {isOwner && m.id !== user.id && (
+                      <button
+                        disabled={busy === `dep-${m.id}`}
+                        onClick={() =>
+                          act(
+                            `dep-${m.id}`,
+                            () => api(`/groups/${group.id}/deputy`, { method: 'PUT', body: { userId: m.role === 'deputy' ? null : m.id } }),
+                            m.role === 'deputy' ? `${m.name} is no longer second in command.` : `${m.name} is now second in command.`,
+                          )
+                        }
+                        className={btn.icon}
+                        aria-label={m.role === 'deputy' ? `Remove ${m.name} as second in command` : `Make ${m.name} second in command`}
+                        title={m.role === 'deputy' ? 'Remove as second in command' : 'Make second in command'}
+                      >
+                        {m.role === 'deputy' ? <ShieldOff size={16} /> : <Shield size={16} />}
+                      </button>
+                    )}
                     {isOwner && m.id !== user.id && (
                       <button
                         onClick={() =>
@@ -460,7 +481,7 @@ export default function GroupDetail() {
             </ul>
           </section>
 
-          {isOwner && (
+          {isLead && (
             <section aria-labelledby="req-h">
               <h2 id="req-h" className="mb-4 flex items-center gap-2 font-display text-xl font-semibold">
                 Join requests
@@ -472,7 +493,7 @@ export default function GroupDetail() {
                 <ul className="space-y-3">
                   {joinRequests.map((r) => {
                     const clash = takenProgrammes.has(r.programmeId)
-                    const blocked = full ? 'Group is full' : clash ? 'Programme already in group' : null
+                    const blocked = full ? 'Union is full' : clash ? 'Programme already in union' : null
                     return (
                       <li key={r.id} className="glass rounded-2xl p-4">
                         <div className="flex items-start gap-3">
@@ -527,13 +548,13 @@ export default function GroupDetail() {
           </div>
           {!myRole ? (
             <p className="glass flex items-center gap-3 rounded-2xl px-5 py-6 text-sm text-muted">
-              <Lock size={18} className="shrink-0" /> Polls are visible to group members only.
+              <Lock size={18} className="shrink-0" /> Polls are visible to union members only.
             </p>
           ) : !polls ? (
             <Skeleton className="h-40" />
           ) : polls.length === 0 ? (
             <Empty icon={Vote} title="No polls yet" action={<button onClick={() => setDialog('poll')} className={btn.primary}><Plus size={16} /> Start a poll</button>}>
-              Ask the group when and where to meet, or which event to take on next.
+              Ask the union when and where to meet, or which event to take on next.
             </Empty>
           ) : (
             <ul className="space-y-4">
@@ -572,7 +593,7 @@ export default function GroupDetail() {
           group={group}
           onSaved={() => {
             setDialog(null)
-            toast('Group updated.')
+            toast('Union updated.')
             load()
           }}
         />

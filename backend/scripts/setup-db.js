@@ -7,7 +7,7 @@ import { config } from '../src/config.js'
 
 const TABLES = [
   'notification', 'points_award', 'evidence', 'achievement', 'team_group', 'event_team', 'event',
-  'poll_vote', 'poll_option', 'poll', 'group_join_request', 'group_member', 'collab_group',
+  'poll_vote', 'poll_option', 'poll', 'group_invite', 'group_join_request', 'group_member', 'collab_group',
   'user_report', 'user_block', 'friend_request', 'profile_link', 'student_interest', 'email_otp',
   'sessions', 'user_account', 'programme',
 ]
@@ -23,6 +23,11 @@ export async function setupDatabase({ reset = false } = {}) {
     const dir = new URL('../db/', import.meta.url)
     await conn.query(await readFile(new URL('schema.sql', dir), 'utf8'))
     await conn.query(await readFile(new URL('seed-programmes.sql', dir), 'utf8'))
+    // Upgrade databases created before the second-in-command role existed
+    await conn.query(`ALTER TABLE group_member MODIFY role ENUM('owner','deputy','member') NOT NULL DEFAULT 'member'`)
+    // One union per student. Fails if a student is still in two unions; remove them from one first.
+    const [idx] = await conn.query(`SHOW INDEX FROM group_member WHERE Key_name = 'uq_one_union'`)
+    if (!idx.length) await conn.query('ALTER TABLE group_member ADD UNIQUE KEY uq_one_union (user_id)')
   } finally {
     await conn.end()
   }

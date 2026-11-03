@@ -44,7 +44,7 @@ export async function signedIn(app, { programmeId = null, role = 'student', name
 // Programme ids from db/seed-programmes.sql
 export const P = {
   BE_CSE: 4, BE_MECH: 9, BE_FT: 13, BE_IT: 14, BE_ECE: 7, BE_CIVIL: 3, BE_EEE: 6,
-  ME_CSE: 22, ME_VLSI: 30, MSC_DS: 38, MCA: 42, MBA: 43,
+  ME_CSE: 22, ME_VLSI: 30, MSC_DS: 38, MCA: 42, AUTO: 1,
 }
 
 // A tiny valid PDF for evidence uploads

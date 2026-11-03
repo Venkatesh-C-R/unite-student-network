@@ -1,4 +1,4 @@
-import { ArrowLeft, Ban, ExternalLink, Flag, MoreHorizontal, Pencil, UserMinus, UserX } from 'lucide-react'
+import { ArrowLeft, Ban, Send, ExternalLink, Flag, MoreHorizontal, Pencil, UserMinus, UserX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { api } from '../api'
@@ -27,6 +27,8 @@ export default function StudentPage() {
   const [dialog, setDialog] = useState(null) // 'block' | 'report' | 'unfriend'
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
+  const [myUnion, setMyUnion] = useState(null)
+  const [invited, setInvited] = useState(false)
   const menuRef = useRef(null)
   const isMe = Number(id) === user.id
 
@@ -43,6 +45,14 @@ export default function StudentPage() {
       current = false
     }
   }, [id, toast])
+
+  // A union leader can invite other students to it
+  useEffect(() => {
+    if (user.role !== 'student') return
+    api('/groups/mine')
+      .then((d) => setMyUnion(d.groups.find((g) => g.myRole === 'owner') || null))
+      .catch(() => {})
+  }, [user.role])
 
   useEffect(() => {
     if (!menu) return
@@ -98,6 +108,21 @@ export default function StudentPage() {
               </Link>
             ) : (
               profile.role === 'student' && <FriendButton student={profile} onChange={(patch) => setProfile((p) => ({ ...p, ...patch }))} />
+            )}
+            {!isMe && profile.role === 'student' && myUnion && (
+              <button
+                disabled={busy || invited}
+                onClick={() =>
+                  run(async () => {
+                    await api(`/groups/${myUnion.id}/invites`, { method: 'POST', body: { userId: profile.id } })
+                    setInvited(true)
+                    toast(`Invited ${profile.name} to ${myUnion.name}.`)
+                  })
+                }
+                className={btn.ghost}
+              >
+                <Send size={16} /> {invited ? 'Invited' : `Invite to ${myUnion.name}`}
+              </button>
             )}
             {!isMe && (
               <div className="relative" ref={menuRef}>

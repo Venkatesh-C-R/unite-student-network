@@ -56,3 +56,11 @@ test('discover: search shows friendship state; suggestions and popular interests
   // LIKE wildcards in the search box are treated as plain text
   assert.equal((await a.agent.get('/api/students').query({ q: '%' })).body.students.length, 0)
 })
+
+test('a student can update their year of study', async () => {
+  const s = await signedIn(app, { programmeId: P.MCA })
+  const r = await s.agent.put('/api/me/profile').send({ year: 2 })
+  assert.equal(r.status, 200, JSON.stringify(r.body))
+  assert.equal(r.body.profile.year, 2)
+  assert.equal((await s.agent.put('/api/me/profile').send({ year: 9 })).status, 400)
+})
