@@ -530,6 +530,7 @@ export default function ClaimsPage() {
       </Empty>
     )
 
+  const isLeader = myGroups.some((g) => g.myRole === 'owner')
   const shown = (claims || []).filter((c) => filter === 'all' || c.status === filter)
   const count = (s) => (claims || []).filter((c) => c.status === s).length
 
@@ -544,9 +545,13 @@ export default function ClaimsPage() {
             </h1>
             <p className="mt-1 max-w-xl text-muted">Won or took part in an event with your union? Submit the result with proof. Faculty verify it, then your union earns the points.</p>
           </div>
-          <button onClick={() => setOpen(true)} className={btn.primary}>
-            <Plus size={17} /> Submit a result
-          </button>
+          {isLeader ? (
+            <button onClick={() => setOpen(true)} className={btn.primary}>
+              <Plus size={17} /> Submit a result
+            </button>
+          ) : (
+            <p className="max-w-56 text-sm text-muted">Only your union leader can submit a result for approval.</p>
+          )}
         </div>
         <dl className="relative mt-6 grid grid-cols-3 gap-3">
           {[
@@ -603,7 +608,7 @@ export default function ClaimsPage() {
       <SubmitClaimDialog
         open={open}
         onClose={() => setOpen(false)}
-        myGroups={myGroups}
+        myGroups={myGroups.filter((g) => g.myRole === 'owner')}
         onSubmitted={() => {
           toast('Submitted! It will count once faculty verify it.')
           load()

@@ -258,6 +258,9 @@ groupsRouter.post('/:id/invites', requireRole('student'), async (req, res) => {
     await lockGroup(conn, groupId)
     if ((await membership(groupId, req.user.id, conn))?.role !== 'owner') throw forbidden('Only the union leader can invite students.')
     if (await isBlocked(req.user.id, userId, conn)) throw notFound('Student not found.')
+    if (await one('SELECT 1 FROM group_member WHERE user_id = ?', [userId], conn)) {
+      throw conflict('That student is already in a union.', 'already_in_union')
+    }
     await assertCanJoin(conn, groupId, userId)
     try {
       const [r] = await conn.query('INSERT INTO group_invite (group_id, inviter_id, invitee_id) VALUES (?, ?, ?)', [groupId, req.user.id, userId])

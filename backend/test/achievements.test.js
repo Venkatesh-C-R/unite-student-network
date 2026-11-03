@@ -121,3 +121,47 @@ test('reviewer can correct the host category before approving', async () => {
   assert.equal(res.body.achievement.points, 67.5)
   assert.equal(res.body.achievement.hostCategory, 'state')
 })
+
+test('faculty find a claim by its CLM id across statuses, or by student and event', async () => {
+  const owner = await signedIn(app, { programmeId: P.BE_IT, name: 'Searchable Sana' })
+  const faculty = await signedIn(app, { role: 'faculty' })
+  const g = (await owner.agent.post('/api/groups').send({ name: 'Seekers' })).body.group.id
+  const ev = (await owner.agent.post('/api/events').send({ title: 'Quasar Quiz Bowl', hostInstitution: 'Some College', hostCategory: 'state' })).body.event
+  const team = (await owner.agent.post(`/api/events/${ev.id}/teams`).send({ label: 'Solo', groupId: g })).body.team
+  const claim = await owner.agent
+    .post('/api/achievements')
+    .field('teamId', team.id)
+    .field('result', '1')
+    .attach('evidence', PDF, { filename: 's.pdf', contentType: 'application/pdf' })
+  const id = claim.body.achievement.id
+  await faculty.agent.post(`/api/review/achievements/${id}`).send({ decision: 'approve' })
+
+  for (const q of [`CLM-${String(id).padStart(4, '0')}`, `#${id}`, String(id)]) {
+    const res = await faculty.agent.get('/api/review/achievements').query({ q })
+    assert.deepEqual(res.body.achievements.map((a) => a.id), [id], q)
+    assert.equal(res.body.achievements[0].status, 'approved')
+  }
+  for (const q of ['Searchable Sana', 'Quasar Quiz']) {
+    const res = await faculty.agent.get('/api/review/achievements').query({ q })
+    assert.ok(res.body.achievements.some((a) => a.id === id), q)
+  }
+  const none = await faculty.agent.get('/api/review/achievements').query({ q: 'no such claim zzz' })
+  assert.equal(none.body.achievements.length, 0)
+  assert.equal((await owner.agent.get('/api/review/achievements').query({ q: String(id) })).status, 403)
+})
+
+test('only the union leader can submit a claim for approval', async () => {
+  const owner = await signedIn(app, { programmeId: P.BE_MECH })
+  const member = await signedIn(app, { programmeId: P.BE_CIVIL })
+  const g = (await owner.agent.post('/api/groups').send({ name: 'Leaders Only' })).body.group.id
+  const req = (await member.agent.post(`/api/groups/${g}/join-requests`).send({})).body
+  await owner.agent.post(`/api/groups/${g}/join-requests/${req.request.id}/approve`)
+  const ev = (await owner.agent.post('/api/events').send({ title: 'Robo Race', hostInstitution: 'X College', hostCategory: 'state' })).body.event
+  const team = (await owner.agent.post(`/api/events/${ev.id}/teams`).send({ label: 'Solo', groupId: g })).body.team
+  const submit = (who) =>
+    who.agent.post('/api/achievements').field('teamId', team.id).field('result', '2').attach('evidence', PDF, { filename: 'r.pdf', contentType: 'application/pdf' })
+  const denied = await submit(member)
+  assert.equal(denied.status, 403)
+  assert.match(JSON.stringify(denied.body), /union leader/)
+  assert.equal((await submit(owner)).status, 201)
+})

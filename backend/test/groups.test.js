@@ -188,3 +188,14 @@ test('only the leader invites; the student accepts and joins', async () => {
   assert.equal(await memberCount(g), 3)
   assert.equal((await invitee.agent.post(`/api/invites/${inv.body.invite.id}/accept`)).status, 404)
 })
+
+test('faculty and admins cannot create or join a union', async () => {
+  const owner = await signedIn(app, { programmeId: P.BE_CSE })
+  const g = (await owner.agent.post('/api/groups').send({ name: 'Students Only' })).body.group.id
+  for (const role of ['faculty', 'admin']) {
+    const staff = await signedIn(app, { role })
+    assert.equal((await staff.agent.post('/api/groups').send({ name: `Staff ${role}` })).status, 403)
+    assert.equal((await staff.agent.post(`/api/groups/${g}/join-requests`).send({})).status, 403)
+    assert.equal((await owner.agent.post(`/api/groups/${g}/invites`).send({ userId: staff.id })).status >= 400, true)
+  }
+})

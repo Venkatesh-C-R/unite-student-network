@@ -71,6 +71,7 @@ export default function App() {
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/claims" element={<ClaimsPage />} />
             <Route path="/review" element={<ReviewPage />} />
+            <Route path="/review/:id" element={<ReviewPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>

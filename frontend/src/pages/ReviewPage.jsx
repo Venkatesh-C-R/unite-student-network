@@ -1,12 +1,13 @@
 import { LayoutGroup, motion } from 'framer-motion'
-import { Check, ClipboardCheck, ShieldAlert, X } from 'lucide-react'
+import { Check, ClipboardCheck, Search, ShieldAlert, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { useParams } from 'react-router'
 import { api } from '../api'
 import ClaimCard from '../components/app/ClaimCard'
 import { Empty, Skeleton } from '../components/app/kit'
 import { useAuth, useToast } from '../context'
 import { HOST_CATEGORIES, POSITIONS } from '../data'
-import { CATEGORY_ICON } from '../lib/claims'
+import { CATEGORY_ICON, claimRef } from '../lib/claims'
 import { formatPoints } from '../lib/format'
 import { btn, input } from '../lib/styles'
 
@@ -121,23 +122,29 @@ function ReviewForm({ claim, onDone }) {
 export default function ReviewPage() {
   const { user } = useAuth()
   const toast = useToast()
+  // /review/:id (the link in "review needed" notifications) opens that claim
+  const { id: linkedId } = useParams()
   const [tab, setTab] = useState('pending')
+  const [query, setQuery] = useState(linkedId ? claimRef(linkedId) : '')
   const [claims, setClaims] = useState(null)
   const [pendingCount, setPendingCount] = useState(null)
+  const q = query.trim()
 
+  // A search looks across every status; otherwise list the chosen tab
   const load = useCallback(() => {
-    api(`/review/achievements?status=${tab}`)
+    api(q ? `/review/achievements?q=${encodeURIComponent(q)}` : `/review/achievements?status=${tab}`)
       .then((d) => {
         setClaims(d.achievements)
-        if (tab === 'pending') setPendingCount(d.achievements.length)
+        if (!q && tab === 'pending') setPendingCount(d.achievements.length)
       })
       .catch((e) => toast(e.message, 'error'))
-  }, [tab, toast])
+  }, [q, tab, toast])
 
   useEffect(() => {
     if (user.role === 'student') return
-    load()
-  }, [load, user.role])
+    const t = setTimeout(load, q ? 250 : 0)
+    return () => clearTimeout(t)
+  }, [load, q, user.role])
 
   if (user.role === 'student')
     return (
@@ -157,40 +164,63 @@ export default function ReviewPage() {
         </p>
       </section>
 
-      <LayoutGroup id="review-tabs">
-        <div role="tablist" className="glass inline-flex rounded-full p-1">
-          {TABS.map(([key, label]) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => {
-                setClaims(null)
-                setTab(key)
-              }}
-              className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tab === key ? 'text-white' : 'text-muted hover:text-ink'}`}
-            >
-              {tab === key && <motion.span layoutId="review-pill" className="bg-gradient-brand absolute inset-0 rounded-full" />}
-              <span className="relative flex items-center gap-1.5">
-                {label}
-                {key === 'pending' && pendingCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] text-slate-900">{pendingCount}</span>}
-              </span>
-            </button>
-          ))}
-        </div>
-      </LayoutGroup>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <LayoutGroup id="review-tabs">
+          <div role="tablist" className="glass inline-flex self-start rounded-full p-1">
+            {TABS.map(([key, label]) => {
+              const active = !q && tab === key
+              return (
+                <button
+                  key={key}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setClaims(null)
+                    setQuery('')
+                    setTab(key)
+                  }}
+                  className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors ${active ? 'text-white' : 'text-muted hover:text-ink'}`}
+                >
+                  {active && <motion.span layoutId="review-pill" className="bg-gradient-brand absolute inset-0 rounded-full" />}
+                  <span className="relative flex items-center gap-1.5">
+                    {label}
+                    {key === 'pending' && pendingCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] text-slate-900">{pendingCount}</span>}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </LayoutGroup>
+        <label className="relative block md:w-80">
+          <span className="sr-only">Search claims</span>
+          <Search size={17} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Claim ID (CLM-0007), student or event"
+            className={`${input} py-2.5 pl-11`}
+          />
+        </label>
+      </div>
 
       {!claims ? (
         <Skeleton className="h-64" />
       ) : claims.length === 0 ? (
-        <Empty icon={ClipboardCheck} title={tab === 'pending' ? 'All caught up' : 'Nothing here yet'}>
-          {tab === 'pending' ? 'No claims are waiting for review.' : 'Reviewed claims will be listed here.'}
-        </Empty>
+        q ? (
+          <Empty icon={Search} title="No claims match">
+            Check the claim ID, for example CLM-0007, or search by student or event.
+          </Empty>
+        ) : (
+          <Empty icon={ClipboardCheck} title={tab === 'pending' ? 'All caught up' : 'Nothing here yet'}>
+            {tab === 'pending' ? 'No claims are waiting for review.' : 'Reviewed claims will be listed here.'}
+          </Empty>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {claims.map((c) => (
             <ClaimCard key={c.id} claim={c} showSubmitter>
-              {tab === 'pending' && c.submitterId !== user.id && <ReviewForm claim={c} onDone={load} />}
+              {c.status === 'pending' && c.submitterId !== user.id && <ReviewForm claim={c} onDone={load} />}
             </ClaimCard>
           ))}
         </div>

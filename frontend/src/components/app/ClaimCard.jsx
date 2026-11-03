@@ -1,6 +1,6 @@
 import { BadgeCheck, Clock, FileText, XCircle } from 'lucide-react'
 import { HOST_CATEGORIES } from '../../data'
-import { CATEGORY_ICON, resultLabel } from '../../lib/claims'
+import { CATEGORY_ICON, claimRef, resultLabel } from '../../lib/claims'
 import { formatPoints, timeAgo } from '../../lib/format'
 
 const STATUS = {
@@ -56,6 +56,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
     <article className="glass rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
+          <p className="font-mono text-xs font-semibold text-muted">{claimRef(claim.id)}</p>
           <h3 className="font-display text-lg font-semibold break-words">{claim.eventTitle}</h3>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
             <span className="inline-flex items-center gap-1">
