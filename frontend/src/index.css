@@ -2,28 +2,30 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* VS Code "Light Modern" and "Dark Modern" palettes */
+/* Poster palette from the UNITE star and loader: banner red, cream paper, ink, star gold */
 :root,
 [data-theme="light"] {
-  --bg: #ffffff;
-  --bg-2: #f8f8f8;
-  --surface: #f8f8f8;
-  --surface-strong: #ffffff;
-  --border: #e5e5e5;
-  --text: #3b3b3b;
-  --muted: #616161;
-  --accent: #005fb8;
+  --bg: #f6eedc;
+  --bg-2: #efe3c8;
+  --surface: #fbf6ea;
+  --surface-strong: #fffaf0;
+  --border: #dccba6;
+  --text: #2b261e;
+  --muted: #6b5e4a;
+  --accent: #bb2525;
+  --brand: #bb2525;
 }
 
 [data-theme="dark"] {
-  --bg: #1f1f1f;
-  --bg-2: #181818;
-  --surface: #181818;
-  --surface-strong: #252526;
-  --border: #2b2b2b;
-  --text: #cccccc;
-  --muted: #9d9d9d;
-  --accent: #4daafc;
+  --bg: #1e1b16;
+  --bg-2: #17140f;
+  --surface: #24201a;
+  --surface-strong: #2b261e;
+  --border: #3a3328;
+  --text: #e9d8b4;
+  --muted: #a89a80;
+  --accent: #ef6b5f;
+  --brand: #bb2525;
 }
 
 @theme inline {
@@ -35,18 +37,25 @@
   --color-ink: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  /* VS Code blue replaces the old violet/indigo/cyan palette everywhere */
-  --color-violet-300: #9cdcfe;
-  --color-violet-400: #0078d4;
-  --color-violet-500: #005fb8;
-  --color-violet-600: #004c94;
-  --color-violet-900: #04395e;
-  --color-indigo-600: #005fb8;
-  --color-indigo-700: #004c94;
-  --color-cyan-400: #0078d4;
-  --color-cyan-500: #005fb8;
+  /* Banner red and star gold replace the old blue/violet/indigo/cyan palette everywhere */
+  --color-violet-300: #f2c14e;
+  --color-violet-400: #d23b3b;
+  --color-violet-500: #bb2525;
+  --color-violet-600: #9c1e1e;
+  --color-violet-900: #4a0d0b;
+  --color-indigo-600: #bb2525;
+  --color-indigo-700: #9c1e1e;
+  --color-cyan-400: #f2c14e;
+  --color-cyan-500: #d8a227;
   --font-display: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Type scale from socialism101.com: 17.33px body, 18.67px subheads, 22.67px headings */
+  --text-base: 17.3333px;
+  --text-base--line-height: 26px;
+  --text-lg: 18.6667px;
+  --text-lg--line-height: 28px;
+  --text-2xl: 22.6667px;
+  --text-2xl--line-height: 34px;
 }
 
 html {
@@ -60,19 +69,21 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  font-size: 17.3333px;
+  line-height: 26px;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 ::selection {
-  background: #005fb8;
-  color: #fff;
+  background: #bb2525;
+  color: #fffaf0;
 }
 
 /* Flat PSG look: these helpers keep their names so components need no changes */
 .text-gradient { color: var(--accent); }
-.bg-gradient-brand { background: #005fb8; }
+.bg-gradient-brand { background: var(--brand); }
 .glass {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -102,11 +113,16 @@ html.lenis body { height: auto; }
 }
 
 :focus-visible {
-  outline: 2px solid #005fb8;
+  outline: 2px solid #d8352e;
   outline-offset: 3px;
   border-radius: 4px;
 }
 
-/* Readable blue on dark panels */
+/* Readable red on dark panels */
 [data-theme="dark"] .text-violet-400,
-[data-theme="dark"] .text-violet-500 { color: #4daafc; }
+[data-theme="dark"] .text-violet-500 { color: #ef6b5f; }
+
+/* UNITE wordmark in the poster colours: red on light, cream on dark */
+.wordmark { color: #bb2525; letter-spacing: 0.08em; text-transform: uppercase; }
+[data-theme="dark"] .wordmark { color: #e9d8b4; }
+.nav-red .wordmark { color: #fffaf0; }

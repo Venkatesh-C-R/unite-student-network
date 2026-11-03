@@ -48,7 +48,7 @@ export default function AppShell({ theme, onToggleTheme }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/" className="flex items-center gap-2" aria-label="UNITE home">
             <Logo size={30} />
-            <span className="text-lg font-bold text-violet-500">UNITE</span>
+            <span className="wordmark text-lg font-bold">UNITE</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
             {NAV.map(([to, label, Icon]) => (

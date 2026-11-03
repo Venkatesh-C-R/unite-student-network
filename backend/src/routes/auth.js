@@ -7,6 +7,7 @@ import { one, pool, withTransaction } from '../db.js'
 import { badRequest, conflict, unauthorized } from '../lib/errors.js'
 import { consumeOtp, issueOtp } from '../lib/otp.js'
 import { email, id, otpCode, password, text } from '../lib/validate.js'
+import { logActivity } from '../lib/activity.js'
 
 export const authRouter = Router()
 
@@ -86,6 +87,7 @@ authRouter.post('/register', limiter(20), async (req, res) => {
   })
 
   await startSession(req, userId)
+  await logActivity(req, 'signup', { userId, targetType: 'user', targetId: userId })
   res.status(201).json({ user: await publicMe(userId) })
 })
 
@@ -94,8 +96,12 @@ authRouter.post('/login', limiter(10), async (req, res) => {
   const user = await one('SELECT id, password_hash, is_active FROM user_account WHERE email = ?', [body.email])
   // Compare against a dummy hash when the user is missing so timing does not reveal accounts
   const ok = await bcrypt.compare(body.password, user?.password_hash || DUMMY_HASH)
-  if (!user || !ok || !user.is_active) throw unauthorized('Email or password is not correct.')
+  if (!user || !ok || !user.is_active) {
+    await logActivity(req, 'login_failed', { userId: user?.id ?? null, details: body.email })
+    throw unauthorized('Email or password is not correct.')
+  }
   await startSession(req, user.id)
+  await logActivity(req, 'login', { userId: user.id })
   res.json({ user: await publicMe(user.id) })
 })
 
@@ -106,10 +112,12 @@ authRouter.post('/reset', limiter(10), async (req, res) => {
     await consumeOtp(conn, body.email, 'reset', body.otp)
     await conn.query('UPDATE user_account SET password_hash = ? WHERE email = ?', [hash, body.email])
   })
+  await logActivity(req, 'password_reset', { userId: (await one('SELECT id FROM user_account WHERE email = ?', [body.email]))?.id })
   res.json({ ok: true, message: 'Password updated. You can sign in now.' })
 })
 
-authRouter.post('/logout', (req, res) => {
+authRouter.post('/logout', async (req, res) => {
+  if (req.user) await logActivity(req, 'logout')
   req.session.destroy(() => {
     res.clearCookie('unite.sid')
     res.json({ ok: true })

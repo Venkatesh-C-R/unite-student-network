@@ -1,10 +1,11 @@
 import { LayoutGroup, motion } from 'framer-motion'
-import { Ban, CheckCircle2, ClipboardCheck, Flag, GraduationCap, RotateCcw, Search, ShieldCheck, UserCog, Users, UsersRound } from 'lucide-react'
+import { Activity, Ban, CheckCircle2, ClipboardCheck, Flag, GraduationCap, RotateCcw, Search, ShieldCheck, UserCog, Users, UsersRound } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api'
 import { Avatar, Dialog, Empty, Skeleton } from '../components/app/kit'
 import { useAuth, useToast } from '../context'
+import { claimRef } from '../lib/claims'
 import { timeAgo } from '../lib/format'
 import { programmeColor } from '../lib/programme'
 import { btn, input } from '../lib/styles'
@@ -359,11 +360,157 @@ function UsersTab({ onChanged }) {
   )
 }
 
+// ---------- Activity log ----------
+const ACTION_LABEL = {
+  signup: 'Signed up',
+  login: 'Signed in',
+  login_failed: 'Failed sign-in',
+  logout: 'Signed out',
+  password_reset: 'Reset password',
+  role_changed: 'Changed a role',
+  user_suspended: 'Suspended a user',
+  user_restored: 'Restored a user',
+  user_reported: 'Reported a user',
+  report_resolved: 'Resolved a report',
+  claim_submitted: 'Submitted a claim',
+  claim_approved: 'Approved a claim',
+  claim_rejected: 'Rejected a claim',
+  union_created: 'Created a union',
+  join_requested: 'Asked to join a union',
+  join_approved: 'Approved a join request',
+  join_rejected: 'Declined a join request',
+  union_left: 'Left a union',
+  member_removed: 'Removed a member',
+  deputy_changed: 'Changed second in command',
+  invite_sent: 'Sent an invite',
+  invite_accepted: 'Accepted an invite',
+  invite_declined: 'Declined an invite',
+}
+
+function targetLink(a) {
+  if (!a.targetId) return null
+  if (a.targetType === 'claim') return { to: `/review/${a.targetId}`, label: claimRef(a.targetId) }
+  if (a.targetType === 'union') return { to: `/groups/${a.targetId}`, label: `Union #${a.targetId}` }
+  if (a.targetType === 'user') return { to: `/students/${a.targetId}`, label: `User #${a.targetId}` }
+  if (a.targetType === 'report') return { to: '/admin', label: `Report #${a.targetId}` }
+  return null
+}
+
+function ActivityTab() {
+  const toast = useToast()
+  const [q, setQ] = useState('')
+  const [action, setAction] = useState('')
+  const [date, setDate] = useState('')
+  const [rows, setRows] = useState(null)
+  const [actions, setActions] = useState([])
+  const [hasMore, setHasMore] = useState(false)
+  const [before, setBefore] = useState(null)
+
+  useEffect(() => {
+    let current = true
+    const t = setTimeout(() => {
+      const p = new URLSearchParams()
+      if (q.trim()) p.set('q', q.trim())
+      if (action) p.set('action', action)
+      if (date) p.set('date', date)
+      if (before) p.set('before', String(before))
+      api(`/admin/activity?${p}`)
+        .then((d) => {
+          if (!current) return
+          setRows((prev) => (before ? [...(prev || []), ...d.activity] : d.activity))
+          setHasMore(d.hasMore)
+          setActions(d.actions)
+        })
+        .catch((e) => current && toast(e.message, 'error'))
+    }, 250)
+    return () => {
+      current = false
+      clearTimeout(t)
+    }
+  }, [q, action, date, before, toast])
+
+  // Filters start again from the newest entry
+  const filterKey = `${q}|${action}|${date}`
+  const [lastKey, setLastKey] = useState(filterKey)
+  if (lastKey !== filterKey) {
+    setLastKey(filterKey)
+    setBefore(null)
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_14rem_11rem]">
+        <label className="relative block">
+          <span className="sr-only">Search activity</span>
+          <Search size={17} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, roll number or detail" className={`${input} pl-11`} />
+        </label>
+        <select value={action} onChange={(e) => setAction(e.target.value)} className={input} aria-label="Filter by action">
+          <option value="">All actions</option>
+          {actions.map((a) => (
+            <option key={a} value={a}>
+              {ACTION_LABEL[a] || a}
+            </option>
+          ))}
+        </select>
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={input} aria-label="Filter by day" />
+      </div>
+
+      {!rows ? (
+        <Skeleton className="h-64" />
+      ) : rows.length === 0 ? (
+        <Empty icon={Activity} title="No activity found">
+          Try a different search, action or day.
+        </Empty>
+      ) : (
+        <>
+          <ul className="glass divide-y divide-line overflow-hidden rounded-2xl">
+            {rows.map((a) => {
+              const target = targetLink(a)
+              return (
+                <li key={a.id} className="flex flex-col gap-1 px-4 py-3 text-sm md:flex-row md:items-center md:gap-4">
+                  <span className="w-36 shrink-0 text-xs text-muted" title={new Date(a.createdAt).toLocaleString()}>
+                    {new Date(a.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <b>{a.userName || 'Unknown user'}</b>
+                    {a.userRole && <span className="text-xs text-muted"> · {a.userRole}</span>}{' '}
+                    <span className={a.action === 'login_failed' || a.action === 'user_suspended' ? 'text-rose-400' : ''}>
+                      {(ACTION_LABEL[a.action] || a.action).toLowerCase()}
+                    </span>
+                    {target && (
+                      <>
+                        {' '}
+                        <Link to={target.to} className="font-semibold text-violet-400 hover:underline">
+                          {target.label}
+                        </Link>
+                      </>
+                    )}
+                    {a.details && <span className="text-muted"> — {a.details}</span>}
+                  </span>
+                  <span className="shrink-0 font-mono text-xs text-muted">{a.ip}</span>
+                </li>
+              )
+            })}
+          </ul>
+          {hasMore && (
+            <div className="text-center">
+              <button onClick={() => setBefore(rows[rows.length - 1].id)} className={btn.ghost}>
+                Load older
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ---------- Page ----------
 export default function AdminPage() {
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'users' ? 'users' : 'reports'
+  const tab = ['users', 'activity'].includes(params.get('tab')) ? params.get('tab') : 'reports'
   const [stats, setStats] = useState(null)
 
   const loadStats = useCallback(() => {
@@ -398,7 +545,7 @@ export default function AdminPage() {
         <h1 className="font-display text-3xl font-bold sm:text-4xl">
           Admin <span className="text-gradient">console</span>
         </h1>
-        <p className="mt-1 text-muted">Handle reports, manage roles and keep UNITE safe.</p>
+        <p className="mt-1 text-muted">Handle reports, manage roles, review activity and keep UNITE safe.</p>
       </section>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -428,6 +575,7 @@ export default function AdminPage() {
           {[
             ['reports', 'Reports'],
             ['users', 'Users'],
+            ['activity', 'Activity'],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -448,7 +596,7 @@ export default function AdminPage() {
         </div>
       </LayoutGroup>
 
-      {tab === 'reports' ? <ReportsTab onChanged={loadStats} /> : <UsersTab onChanged={loadStats} />}
+      {tab === 'reports' ? <ReportsTab onChanged={loadStats} /> : tab === 'users' ? <UsersTab onChanged={loadStats} /> : <ActivityTab />}
     </div>
   )
 }

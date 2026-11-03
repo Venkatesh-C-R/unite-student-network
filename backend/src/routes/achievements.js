@@ -8,6 +8,7 @@ import { scoreFor } from '../lib/scoring.js'
 import { evidenceUpload, removeFiles, uploadDir, verifyFiles } from '../lib/uploads.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole, requireUser } from '../middleware/auth.js'
+import { logActivity } from '../lib/activity.js'
 
 export const achievementsRouter = Router()
 
@@ -71,10 +72,11 @@ achievementsRouter.post('/achievements', requireRole('student'), evidenceUpload,
     await verifyFiles(files)
 
     const inTeam = await one(
-      `SELECT 1 FROM team_group tg JOIN group_member gm ON gm.group_id = tg.group_id WHERE tg.team_id = ? AND gm.user_id = ?`,
+      `SELECT gm.role FROM team_group tg JOIN group_member gm ON gm.group_id = tg.group_id WHERE tg.team_id = ? AND gm.user_id = ?`,
       [body.teamId, req.user.id],
     )
     if (!inTeam) throw forbidden('You can only submit results for a team your group is in.')
+    if (inTeam.role !== 'owner') throw forbidden('Only the union leader can submit a claim for approval.', 'leader_only')
 
     const achievementId = await withTransaction(async (conn) => {
       const dup = await one(`SELECT id FROM achievement WHERE team_id = ? AND status IN ('pending','approved') FOR UPDATE`, [body.teamId], conn)
@@ -92,6 +94,7 @@ achievementsRouter.post('/achievements', requireRole('student'), evidenceUpload,
     })
     const reviewers = await all(`SELECT id FROM user_account WHERE role IN ('faculty','admin') AND is_active`)
     await notify(reviewers.map((r) => r.id), 'review_needed', 'A new achievement is waiting for review.', `/review/${achievementId}`)
+    await logActivity(req, 'claim_submitted', { targetType: 'claim', targetId: achievementId, details: `result ${body.result}` })
     const [created] = await withDetails(await all(`${ACH_SELECT} WHERE a.id = ?`, [achievementId]))
     res.status(201).json({ achievement: created })
   } catch (e) {
@@ -131,10 +134,25 @@ achievementsRouter.get('/evidence/:id', requireUser, async (req, res) => {
   res.sendFile(path.join(uploadDir, path.basename(file.stored_name)))
 })
 
+// A claim's public reference is "CLM-" + its id, e.g. CLM-0007. Accepts "CLM-7", "clm0007", "#7" or "7".
+const CLAIM_REF = /^#?\s*(?:clm)?[\s#-]*0*(\d{1,9})$/i
+
 // ---------- Faculty / admin review ----------
+// With q: a claim reference matches that one claim in any status; other text searches
+// student name, roll number and event title across all statuses.
 achievementsRouter.get('/review/achievements', requireRole('faculty', 'admin'), async (req, res) => {
-  const { status } = z.object({ status: z.enum(['pending', 'approved', 'rejected']).default('pending') }).parse(req.query)
-  const rows = await all(`${ACH_SELECT} WHERE a.status = ? ORDER BY a.id ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 100`, [status])
+  const { status, q } = z
+    .object({ status: z.enum(['pending', 'approved', 'rejected']).default('pending'), q: z.string().trim().max(100).optional() })
+    .parse(req.query)
+  let rows
+  if (q) {
+    const ref = CLAIM_REF.exec(q)
+    if (ref) rows = await all(`${ACH_SELECT} WHERE a.id = ?`, [Number(ref[1])])
+    else {
+      const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`
+      rows = await all(`${ACH_SELECT} WHERE s.name LIKE ? OR s.roll_no LIKE ? OR e.title LIKE ? ORDER BY a.id DESC LIMIT 100`, [like, like, like])
+    }
+  } else rows = await all(`${ACH_SELECT} WHERE a.status = ? ORDER BY a.id ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 100`, [status])
   res.json({ achievements: await withDetails(rows) })
 })
 
@@ -198,6 +216,11 @@ achievementsRouter.post('/review/achievements/:id', requireRole('faculty', 'admi
       : `Your claim for ${outcome.a.title} was not approved: ${body.note}`,
     `/achievements/${achId}`,
   )
+  await logActivity(req, body.decision === 'approve' ? 'claim_approved' : 'claim_rejected', {
+    targetType: 'claim',
+    targetId: achId,
+    details: body.decision === 'approve' ? `+${outcome.points} pts` : body.note,
+  })
   const [row] = await withDetails(await all(`${ACH_SELECT} WHERE a.id = ?`, [achId]))
   res.json({ achievement: row })
 })

@@ -14,8 +14,9 @@ export default function Hero({ onSignIn }) {
     <section id="top" className="border-b border-line">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-[1.2fr_1fr] lg:py-24">
         <div>
-          <h1 className="text-5xl font-bold text-violet-500 sm:text-6xl">UNITE</h1>
-          <p className="mt-3 text-lg font-semibold sm:text-xl">University Network for Interdisciplinary Teamwork and Engagement</p>
+          <h1 className="wordmark text-5xl font-bold sm:text-6xl">UNITE</h1>
+          <p className="mt-3 text-lg font-semibold sm:text-xl">Students of all programmes, unite!</p>
+          <p className="mt-1 text-sm font-semibold tracking-wide text-muted uppercase">Six programmes. One union. Forward!</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <button onClick={onSignIn} className={btnPrimary}>
               Get started <ArrowRight size={18} />

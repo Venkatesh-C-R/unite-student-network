@@ -5,6 +5,7 @@ import { badRequest, conflict, forbidden, notFound } from '../lib/errors.js'
 import { notify } from '../lib/notify.js'
 import { httpUrl, id, idParam, text } from '../lib/validate.js'
 import { requireUser } from '../middleware/auth.js'
+import { logActivity } from '../lib/activity.js'
 
 export const peopleRouter = Router()
 peopleRouter.use(requireUser)
@@ -302,6 +303,7 @@ peopleRouter.post('/reports', async (req, res) => {
   await pool.query('INSERT INTO user_report (reporter_id, reported_id, reason) VALUES (?, ?, ?)', [req.user.id, body.userId, body.reason])
   const admins = await all(`SELECT id FROM user_account WHERE role = 'admin' AND is_active`)
   await notify(admins.map((a) => a.id), 'report', 'A student was reported and needs review.', '/admin/reports')
+  await logActivity(req, 'user_reported', { targetType: 'user', targetId: body.userId })
   res.status(201).json({ ok: true, message: 'Thanks. An admin will look at this report.' })
 })
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api } from '../api'
 import { useAuth, useToast } from '../context'
+import UnionMembers from '../components/app/UnionMembers'
 import { Dialog, Empty, ProgrammeChip, Skeleton, SlotDots } from '../components/app/kit'
 import { formatPoints, timeAgo } from '../lib/format'
 import { btn, input } from '../lib/styles'
@@ -130,10 +131,12 @@ export default function GroupsPage() {
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  // Faculty and admins can browse unions but never create or join one
+  const isStudent = user.role === 'student'
   const [mine, setMine] = useState(null)
   const [explore, setExplore] = useState(null)
   const [query, setQuery] = useState('')
-  const [openOnly, setOpenOnly] = useState(true)
+  const [openOnly, setOpenOnly] = useState(isStudent)
   const [creating, setCreating] = useState(false)
   const [busyId, setBusyId] = useState(null)
 
@@ -229,7 +232,7 @@ export default function GroupsPage() {
             {user.programmeName && <ProgrammeChip id={user.programmeId} level={user.programmeLevel} name={user.programmeName} className="mt-3" />}
           </div>
           <div className="flex flex-wrap gap-2">
-            {mine?.groups.length === 0 && (
+            {isStudent && mine?.groups.length === 0 && (
               <>
                 <button onClick={() => setCreating(true)} className={btn.primary}>
                   <Plus size={17} /> Create union
@@ -241,20 +244,22 @@ export default function GroupsPage() {
             )}
           </div>
         </div>
-        <dl className="relative mt-6 grid grid-cols-3 gap-3">
-          {[
-            ['My unions', mine ? mine.groups.length : '–', Users],
-            ['Requests to review', mine ? ownerInbox : '–', Inbox],
-            ['Points (my unions)', mine ? formatPoints(totalPoints) : '–', Trophy],
-          ].map(([label, value, Icon]) => (
-            <div key={label} className="rounded-2xl bg-violet-500/10 p-3 sm:p-4">
-              <dt className="flex items-center gap-1.5 text-[11px] text-muted sm:text-xs">
-                <Icon size={13} /> {label}
-              </dt>
-              <dd className="mt-1 font-display text-2xl font-bold">{value}</dd>
-            </div>
-          ))}
-        </dl>
+        {isStudent && (
+          <dl className="relative mt-6 grid grid-cols-3 gap-3">
+            {[
+              ['My union', mine ? mine.groups[0]?.name || 'None yet' : '–', Users],
+              ['Requests to review', mine ? ownerInbox : '–', Inbox],
+              ['Points (my union)', mine ? formatPoints(totalPoints) : '–', Trophy],
+            ].map(([label, value, Icon]) => (
+              <div key={label} className="rounded-2xl bg-violet-500/10 p-3 sm:p-4">
+                <dt className="flex items-center gap-1.5 text-[11px] text-muted sm:text-xs">
+                  <Icon size={13} /> {label}
+                </dt>
+                <dd className="mt-1 truncate font-display text-2xl font-bold" title={String(value)}>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </section>
 
       {invites.length > 0 && (
@@ -283,10 +288,11 @@ export default function GroupsPage() {
       )}
 
       {/* My groups */}
+      {isStudent && (
       <section aria-labelledby="mine-h">
         <div className="mb-4 flex items-end justify-between">
           <h2 id="mine-h" className="font-display text-2xl font-semibold">
-            My unions
+            My union
           </h2>
         </div>
         {!mine ? (
@@ -313,30 +319,10 @@ export default function GroupsPage() {
             Start your own team, or ask to join one that still needs your programme.
           </Empty>
         ) : (
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mine.groups.map((g, i) => (
-              <GroupCard
-                key={g.id}
-                group={g}
-                index={i}
-                footer={
-                  g.pendingJoinRequests > 0 && (
-                    <Link
-                      to={`/groups/${g.id}`}
-                      className="flex items-center justify-between rounded-2xl bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-600 dark:text-violet-300"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Inbox size={16} /> {g.pendingJoinRequests} join request{g.pendingJoinRequests > 1 ? 's' : ''}
-                      </span>
-                      Review →
-                    </Link>
-                  )
-                }
-              />
-            ))}
-          </ul>
+          <UnionMembers group={mine.groups[0]} />
         )}
       </section>
+      )}
 
       {/* My pending requests */}
       {mine?.pendingRequests.length > 0 && (
@@ -370,7 +356,9 @@ export default function GroupsPage() {
             <h2 id="explore-h" className="font-display text-2xl font-semibold">
               Explore unions
             </h2>
-            <p className="text-sm text-muted">Ask to join a union that still needs your programme.</p>
+            <p className="text-sm text-muted">
+              {isStudent ? 'Ask to join a union that still needs your programme.' : 'Browse every union. Only students can create or join one.'}
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="relative block">
@@ -378,10 +366,12 @@ export default function GroupsPage() {
               <Search size={17} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name" className={`${input} py-2.5 pl-11 sm:w-64`} />
             </label>
-            <label className="glass inline-flex cursor-pointer items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-medium select-none">
-              <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-violet-500" />
-              Has room for my programme
-            </label>
+            {isStudent && (
+              <label className="glass inline-flex cursor-pointer items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-medium select-none">
+                <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-violet-500" />
+                Has room for my programme
+              </label>
+            )}
           </div>
         </div>
 
@@ -392,9 +382,15 @@ export default function GroupsPage() {
             ))}
           </div>
         ) : explore.length === 0 ? (
-          <Empty icon={Compass} title={query ? 'No unions match that name' : 'No open unions right now'} action={<button onClick={() => setCreating(true)} className={btn.primary}><Plus size={17} /> Start one</button>}>
-            {openOnly ? 'Try turning off “Has room for my programme”, or create a new union.' : 'Be the first to create one.'}
-          </Empty>
+          isStudent ? (
+            <Empty icon={Compass} title={query ? 'No unions match that name' : 'No open unions right now'} action={<button onClick={() => setCreating(true)} className={btn.primary}><Plus size={17} /> Start one</button>}>
+              {openOnly ? 'Try turning off “Has room for my programme”, or create a new union.' : 'Be the first to create one.'}
+            </Empty>
+          ) : (
+            <Empty icon={Compass} title={query ? 'No unions match that name' : 'No unions yet'}>
+              Unions appear here once students create them.
+            </Empty>
+          )
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {explore.map((g, i) => {
@@ -406,9 +402,9 @@ export default function GroupsPage() {
                   group={g}
                   index={i}
                   footer={
-                    g.myRole ? (
+                    g.myRole || !isStudent ? (
                       <Link to={`/groups/${g.id}`} className={`${btn.ghost} w-full`}>
-                        Open union
+                        {g.myRole ? 'Open union' : 'View union'}
                       </Link>
                     ) : pending ? (
                       <button onClick={() => cancelRequest(g.id, g.name)} disabled={busyId === g.id} className={`${btn.ghost} w-full`}>

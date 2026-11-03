@@ -1,18 +1,33 @@
 import { motion } from 'framer-motion'
 
-export function Logo({ size = 32, className = '' }) {
-  const dots = Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 3) * i - Math.PI / 2
-    return [32 + 18 * Math.cos(a), 32 + 18 * Math.sin(a)]
-  })
+// The union star: five arms folded red and cream, one centre. Also the favicon (public/favicon.svg).
+const STAR_ARMS = [
+  [[0, -24], [6, -8], [-6, -8]],
+  [[22.8, -7.4], [10, 3], [6, -8]],
+  [[14.1, 19.4], [0, 10], [10, 3]],
+  [[-14.1, 19.4], [-9, 4], [0, 10]],
+  [[-22.8, -7.4], [-6, -8], [-9, 4]],
+]
+
+export function Star({ size = 32, className = '', tile = true }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden="true">
-      {dots.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="5" fill="var(--accent)" />
-      ))}
-      <circle cx="32" cy="32" r="7" fill="none" stroke="var(--accent)" strokeWidth="3" />
+      {tile && <rect width="64" height="64" rx="14" fill="#1E1B16" />}
+      <g transform="translate(32 33)">
+        {STAR_ARMS.map(([tip, red, cream], i) => (
+          <g key={i}>
+            <polygon points={`${tip} ${red} 0,0`} fill="#BB2525" />
+            <polygon points={`${tip} ${cream} 0,0`} fill="#E9D8B4" />
+          </g>
+        ))}
+        <circle r="3.2" fill="#1E1B16" />
+      </g>
     </svg>
   )
+}
+
+export function Logo({ size = 32, className = '' }) {
+  return <Star size={size} className={className} />
 }
 
 export function Reveal({ children, delay = 0, y = 32, className = '' }) {

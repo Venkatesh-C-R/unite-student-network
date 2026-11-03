@@ -373,7 +373,9 @@ export default function GroupDetail() {
                 <LogOut size={16} /> Leave
               </button>
             )}
+            {/* Only students can ask to join; faculty and admins just view */}
             {!myRole &&
+              user.role === 'student' &&
               (myPending ? (
                 <button
                   disabled={busy === 'join'}

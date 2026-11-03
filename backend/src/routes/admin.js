@@ -5,6 +5,7 @@ import { badRequest, conflict, notFound } from '../lib/errors.js'
 import { notify } from '../lib/notify.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
+import { logActivity } from '../lib/activity.js'
 
 export const adminRouter = Router()
 adminRouter.use(requireRole('admin'))
@@ -48,6 +49,7 @@ adminRouter.post('/reports/:id/resolve', async (req, res) => {
     [req.user.id, reportId],
   )
   if (!r.affectedRows) throw notFound('Open report not found.')
+  await logActivity(req, 'report_resolved', { targetType: 'report', targetId: reportId })
   res.json({ ok: true })
 })
 
@@ -101,7 +103,10 @@ adminRouter.post('/users/:id/role', async (req, res) => {
     throw conflict(`This student is in ${user.groupCount} group(s). They must leave their groups before becoming ${role}.`, 'in_groups')
   }
   await pool.query('UPDATE user_account SET role = ? WHERE id = ?', [role, userId])
-  if (role !== user.role) await notify(userId, 'role_changed', `An admin changed your UNITE role to ${role}.`)
+  if (role !== user.role) {
+    await notify(userId, 'role_changed', `An admin changed your UNITE role to ${role}.`)
+    await logActivity(req, 'role_changed', { targetType: 'user', targetId: userId, details: `${user.role} → ${role}` })
+  }
   res.json({ ok: true })
 })
 
@@ -112,5 +117,48 @@ adminRouter.post('/users/:id/active', async (req, res) => {
   if (userId === req.user.id) throw badRequest('You cannot suspend yourself.')
   const [r] = await pool.query('UPDATE user_account SET is_active = ? WHERE id = ?', [active, userId])
   if (!r.affectedRows) throw notFound('User not found.')
+  await logActivity(req, active ? 'user_restored' : 'user_suspended', { targetType: 'user', targetId: userId })
   res.json({ ok: true })
+})
+
+// Activity log, newest first. Filter by action, by user (name, email or roll no.) or by day;
+// pass ?before=<id> to load the next page.
+adminRouter.get('/activity', async (req, res) => {
+  const f = z
+    .object({
+      action: z.string().trim().max(40).optional(),
+      q: z.string().trim().max(100).optional(),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      before: id.optional(),
+    })
+    .parse(req.query)
+  const where = []
+  const args = []
+  if (f.action) {
+    where.push('l.action = ?')
+    args.push(f.action)
+  }
+  if (f.date) {
+    where.push('l.created_at >= ? AND l.created_at < ? + INTERVAL 1 DAY')
+    args.push(f.date, f.date)
+  }
+  if (f.before) {
+    where.push('l.id < ?')
+    args.push(f.before)
+  }
+  if (f.q) {
+    const like = `%${f.q.replace(/[\\%_]/g, '\\$&')}%`
+    where.push('(u.name LIKE ? OR u.email LIKE ? OR u.roll_no LIKE ? OR l.details LIKE ?)')
+    args.push(like, like, like, like)
+  }
+  const rows = await all(
+    `SELECT l.id, l.action, l.target_type AS targetType, l.target_id AS targetId, l.details, l.ip, l.created_at AS createdAt,
+            u.id AS userId, u.name AS userName, u.email AS userEmail, u.role AS userRole
+       FROM activity_log l LEFT JOIN user_account u ON u.id = l.user_id
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY l.id DESC LIMIT 51`,
+    args,
+  )
+  const actions = await all('SELECT DISTINCT action FROM activity_log ORDER BY action')
+  res.json({ activity: rows.slice(0, 50), hasMore: rows.length > 50, actions: actions.map((a) => a.action) })
 })
