@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { MAX_GROUP_SIZE, PROGRAMMES } from '../data'
 import { Glow, Reveal, SectionHeading } from './ui'
 
-const COLORS = ['#C8231F', '#D8A227', '#9A1916', '#E2703A', '#6B5E4A', '#B3201E']
+const COLORS = ['#BB2525', '#D8A227', '#9A1916', '#E2703A', '#6B5E4A', '#BB2525']
 const NAMES = ['Aarav', 'Diya', 'Kavin', 'Meera', 'Rahul', 'Sneha', 'Arjun', 'Nila', 'Vikram', 'Priya']
 
 // Interactive demo of the core rule: at most six members, one per programme.

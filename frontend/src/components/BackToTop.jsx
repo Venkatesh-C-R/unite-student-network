@@ -25,7 +25,7 @@ export default function BackToTop() {
             <motion.circle cx="24" cy="24" r="22" fill="none" stroke="url(#btt-g)" strokeWidth="2.5" style={{ pathLength: scrollYProgress }} />
             <defs>
               <linearGradient id="btt-g">
-                <stop offset="0" stopColor="#C8231F" />
+                <stop offset="0" stopColor="#BB2525" />
                 <stop offset="1" stopColor="#F2C14E" />
               </linearGradient>
             </defs>

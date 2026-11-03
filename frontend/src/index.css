@@ -12,8 +12,8 @@
   --border: #dccba6;
   --text: #2b261e;
   --muted: #6b5e4a;
-  --accent: #b3201e;
-  --brand: #b3201e;
+  --accent: #bb2525;
+  --brand: #bb2525;
 }
 
 [data-theme="dark"] {
@@ -25,7 +25,7 @@
   --text: #e9d8b4;
   --muted: #a89a80;
   --accent: #ef6b5f;
-  --brand: #c8231f;
+  --brand: #bb2525;
 }
 
 @theme inline {
@@ -39,16 +39,23 @@
   --color-accent: var(--accent);
   /* Banner red and star gold replace the old blue/violet/indigo/cyan palette everywhere */
   --color-violet-300: #f2c14e;
-  --color-violet-400: #d8352e;
-  --color-violet-500: #b3201e;
-  --color-violet-600: #9a1916;
+  --color-violet-400: #d23b3b;
+  --color-violet-500: #bb2525;
+  --color-violet-600: #9c1e1e;
   --color-violet-900: #4a0d0b;
-  --color-indigo-600: #b3201e;
-  --color-indigo-700: #9a1916;
+  --color-indigo-600: #bb2525;
+  --color-indigo-700: #9c1e1e;
   --color-cyan-400: #f2c14e;
   --color-cyan-500: #d8a227;
   --font-display: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Type scale from socialism101.com: 17.33px body, 18.67px subheads, 22.67px headings */
+  --text-base: 17.3333px;
+  --text-base--line-height: 26px;
+  --text-lg: 18.6667px;
+  --text-lg--line-height: 28px;
+  --text-2xl: 22.6667px;
+  --text-2xl--line-height: 34px;
 }
 
 html {
@@ -62,13 +69,15 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  font-size: 17.3333px;
+  line-height: 26px;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 ::selection {
-  background: #c8231f;
+  background: #bb2525;
   color: #fffaf0;
 }
 
@@ -114,6 +123,6 @@ html.lenis body { height: auto; }
 [data-theme="dark"] .text-violet-500 { color: #ef6b5f; }
 
 /* UNITE wordmark in the poster colours: red on light, cream on dark */
-.wordmark { color: #c8231f; letter-spacing: 0.08em; text-transform: uppercase; }
+.wordmark { color: #bb2525; letter-spacing: 0.08em; text-transform: uppercase; }
 [data-theme="dark"] .wordmark { color: #e9d8b4; }
 .nav-red .wordmark { color: #fffaf0; }

@@ -49,7 +49,7 @@ async function withProgrammes(groups, userId) {
 
 async function members(groupId) {
   return all(
-    `SELECT u.id, u.name, gm.role, gm.joined_at AS joinedAt,
+    `SELECT u.id, u.name, u.roll_no AS rollNo, u.year, u.created_at AS accountCreatedAt, gm.role, gm.joined_at AS joinedAt,
             p.id AS programmeId, p.level AS programmeLevel, p.name AS programmeName
        FROM group_member gm
        JOIN user_account u ON u.id = gm.user_id

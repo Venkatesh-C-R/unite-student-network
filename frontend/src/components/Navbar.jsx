@@ -39,7 +39,7 @@ export default function Navbar({ theme, onToggleTheme, onSignIn, user, onSignOut
     scrollToId(id)
   }
 
-  const pill = 'rounded px-3 py-1.5 text-sm font-semibold'
+  const pill = 'rounded px-3 py-1.5 text-sm font-semibold whitespace-nowrap'
 
   return (
     <header className="nav-red sticky top-0 z-50 bg-[var(--brand)] text-[#fffaf0] shadow-md shadow-black/20">

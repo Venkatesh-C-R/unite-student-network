@@ -31,7 +31,7 @@ export default function Loader({ onDone }) {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         aria-hidden="true"
       >
-        <rect width="64" height="64" rx="14" fill="#C8231F" />
+        <rect width="64" height="64" rx="14" fill="#BB2525" />
         {RAYS.map(([x1, y1, x2, y2], i) => (
           <motion.polygon
             key={i}
@@ -86,7 +86,7 @@ export default function Loader({ onDone }) {
       </motion.p>
       <div className="mt-8 h-1 w-48 overflow-hidden rounded-full bg-white/10">
         <motion.div
-          className="h-full bg-[#C8231F]"
+          className="h-full bg-[#BB2525]"
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{ duration: 2.2, ease: 'easeInOut' }}

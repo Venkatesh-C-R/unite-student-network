@@ -16,7 +16,7 @@ export function Star({ size = 32, className = '', tile = true }) {
       <g transform="translate(32 33)">
         {STAR_ARMS.map(([tip, red, cream], i) => (
           <g key={i}>
-            <polygon points={`${tip} ${red} 0,0`} fill="#C8231F" />
+            <polygon points={`${tip} ${red} 0,0`} fill="#BB2525" />
             <polygon points={`${tip} ${cream} 0,0`} fill="#E9D8B4" />
           </g>
         ))}

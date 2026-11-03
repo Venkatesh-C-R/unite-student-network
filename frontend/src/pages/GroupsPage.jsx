@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api } from '../api'
 import { useAuth, useToast } from '../context'
+import UnionMembers from '../components/app/UnionMembers'
 import { Dialog, Empty, ProgrammeChip, Skeleton, SlotDots } from '../components/app/kit'
 import { formatPoints, timeAgo } from '../lib/format'
 import { btn, input } from '../lib/styles'
@@ -318,28 +319,7 @@ export default function GroupsPage() {
             Start your own team, or ask to join one that still needs your programme.
           </Empty>
         ) : (
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mine.groups.map((g, i) => (
-              <GroupCard
-                key={g.id}
-                group={g}
-                index={i}
-                footer={
-                  g.pendingJoinRequests > 0 && (
-                    <Link
-                      to={`/groups/${g.id}`}
-                      className="flex items-center justify-between rounded-2xl bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-600 dark:text-violet-300"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Inbox size={16} /> {g.pendingJoinRequests} join request{g.pendingJoinRequests > 1 ? 's' : ''}
-                      </span>
-                      Review →
-                    </Link>
-                  )
-                }
-              />
-            ))}
-          </ul>
+          <UnionMembers group={mine.groups[0]} />
         )}
       </section>
       )}
