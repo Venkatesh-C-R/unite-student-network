@@ -129,12 +129,23 @@ export const TEAM = [
   { name: 'Venkatesh C R', roll: '26MX354' },
 ]
 
+export const RULES = [
+  'A student can be in only one union at a time.',
+  'A union has up to six members, each from a different programme.',
+  'Each union has one leader and can have one second in command.',
+  'The leader or second in command approves join requests.',
+  'If the leader leaves, the second in command takes over.',
+  'Only results approved by faculty earn points.',
+]
+
 export const FAQS = [
   { q: 'Who can join UNITE?', a: 'Students of PSG College of Technology (and the eligible PSG Institute of Management programmes). Sign-up uses your college email, rollno@psgtech.ac.in. PhD and research programmes are not included for now.' },
-  { q: 'Why can a group have only one student per programme?', a: 'UNITE is built for interdisciplinary teamwork. One member per programme means every group mixes different skills — a designer, an engineer, a data scientist and more.' },
-  { q: 'Are BE CSE and ME CSE the same programme?', a: 'No. Degree level and programme name together identify a programme, so a BE CSE student and an ME CSE student can be in the same group.' },
-  { q: 'Can I be friends with someone from my own programme?', a: 'Yes. The one-per-programme rule applies only to groups, not to friendships.' },
-  { q: 'What if an event needs more than six people?', a: 'Two or more groups can team up for that event. Each group still keeps its own six-member, one-per-programme limit — groups are never merged.' },
-  { q: 'How are points decided?', a: 'By your result and the host institution: College ×1.0, State ×1.5 (any other college) and National ×2.0 (Institutes of National Importance). Only faculty-approved achievements count.' },
-  { q: 'Is there a separate meetup feature?', a: 'Meetups are planned with group polls — members vote on the time and place.' },
+  { q: 'Why only one student per programme?', a: 'UNITE is built for interdisciplinary teamwork. One member per programme means every union mixes different skills — a designer, an engineer, a data scientist and more.' },
+  { q: 'Can I switch to another union?', a: 'Yes. Leave your current union, then ask to join the new one. When a union accepts you, your other pending requests are cancelled.' },
+  { q: 'Who is the leader?', a: 'Whoever creates the union. The leader can name one member as second in command and change that choice at any time.' },
+  { q: 'Are BE CSE and ME CSE the same programme?', a: 'No. Degree level and programme name together identify a programme, so a BE CSE student and an ME CSE student can be in the same union.' },
+  { q: 'Can I be friends with someone from my own programme?', a: 'Yes. The one-per-programme rule applies only to unions, not to friendships.' },
+  { q: 'What if an event needs more than six people?', a: 'Two or more unions can team up for that event. Each union keeps its own members and limits — unions are never merged.' },
+  { q: 'How are points decided?', a: 'By your result and the host institution: College ×1.0, State ×1.5 (any other college) and National ×2.0 (Institutes of National Importance).' },
+  { q: 'How do we plan meetups?', a: 'With union polls — members vote on the time and place.' },
 ]

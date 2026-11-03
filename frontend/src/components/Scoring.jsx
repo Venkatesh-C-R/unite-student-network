@@ -121,8 +121,8 @@ function Leaderboard() {
     <div className="glass h-full rounded-[2rem] p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-2xl font-semibold">Group leaderboard</h3>
-          <p className="mt-1 text-sm text-muted">Groups are ranked, not individuals.</p>
+          <h3 className="font-display text-2xl font-semibold">Union leaderboard</h3>
+          <p className="mt-1 text-sm text-muted">Unions are ranked, not individuals.</p>
         </div>
         <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-500">
           Demo data
@@ -179,7 +179,7 @@ function Leaderboard() {
         ))}
       </ol>
       <p className="mt-4 flex items-center gap-1.5 text-xs text-muted">
-        <Medal size={14} /> Fictional groups for illustration. Only verified results earn points.
+        <Medal size={14} /> Fictional unions for illustration. Only verified results earn points.
       </p>
     </div>
   )
@@ -190,7 +190,7 @@ export default function Scoring() {
     <section id="scoring" className="relative px-5 py-28">
       <Glow className="top-1/3 -left-48" />
       <div className="relative mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Scoring" title={<>Fair points, <span className="text-gradient">verified</span> wins</>}>
+        <SectionHeading title={<>Fair points, <span className="text-gradient">verified</span> wins</>}>
           1st place earns 100 base points, down to 10 for taking part. The host institution then multiplies it.
         </SectionHeading>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

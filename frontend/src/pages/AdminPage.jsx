@@ -129,7 +129,7 @@ function ReportsTab({ onChanged }) {
                   )}
                 </div>
               </div>
-              <blockquote className="mt-4 rounded-2xl border-l-4 border-violet-400 bg-violet-500/5 px-4 py-3 text-sm">“{r.reason}”</blockquote>
+              <blockquote className="mt-4 rounded-md bg-bg-2 px-4 py-3 text-sm">“{r.reason}”</blockquote>
               <p className="mt-2 text-xs text-muted">
                 Reported by {r.reporterName} · {timeAgo(r.createdAt)}
                 {r.status === 'resolved' && ` · resolved by ${r.resolvedByName || 'an admin'} ${timeAgo(r.resolvedAt)}`}
@@ -282,7 +282,7 @@ function UsersTab({ onChanged }) {
                       <p className="truncate text-xs text-muted">
                         {u.email}
                         {u.programmeName ? ` · ${u.programmeLevel} ${u.programmeName}` : ''}
-                        {u.role === 'student' ? ` · ${u.groupCount} group${u.groupCount === 1 ? '' : 's'}` : ''} · joined {timeAgo(u.createdAt)}
+                        {u.role === 'student' ? ` · ${u.groupCount} union${u.groupCount === 1 ? '' : 's'}` : ''} · joined {timeAgo(u.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -302,8 +302,8 @@ function UsersTab({ onChanged }) {
                               next === 'admin'
                                 ? 'Admins can review claims, handle reports, change roles and suspend accounts.'
                                 : next === 'faculty'
-                                  ? 'Faculty can approve and reject achievement claims. They cannot join groups or submit claims.'
-                                  : 'Students can join groups, submit claims and use Discover.',
+                                  ? 'Faculty can approve and reject achievement claims. They cannot join unions or submit claims.'
+                                  : 'Students can join unions, submit claims and use Discover.',
                             action: 'Change role',
                             run: () => act(() => api(`/admin/users/${u.id}/role`, { method: 'POST', body: { role: next } }), `${u.name} is now ${next}.`),
                           })
@@ -388,7 +388,7 @@ export default function AdminPage() {
     ['Pending claims', stats?.pendingClaims, ClipboardCheck, 'text-amber-500'],
     ['Students', stats?.students, GraduationCap, ''],
     ['Faculty & admins', stats?.staff, UserCog, ''],
-    ['Groups', stats?.groupCount, UsersRound, ''],
+    ['Unions', stats?.groupCount, UsersRound, ''],
     ['Suspended', stats?.suspended, Ban, 'text-muted'],
   ]
 

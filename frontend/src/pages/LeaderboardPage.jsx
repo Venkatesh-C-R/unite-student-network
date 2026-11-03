@@ -75,19 +75,19 @@ export default function LeaderboardPage() {
     <div className="space-y-10">
       <section className="text-center">
         <span className="glass mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold tracking-widest text-violet-600 uppercase dark:text-violet-300">
-          <Trophy size={14} /> Group leaderboard
+          <Trophy size={14} /> Union leaderboard
         </span>
         <h1 className="font-display text-3xl font-bold sm:text-5xl">
           Teams that <span className="text-gradient">win together</span>
         </h1>
-        <p className="mx-auto mt-2 max-w-xl text-muted">Groups are ranked by verified points. Only results approved by faculty count.</p>
+        <p className="mx-auto mt-2 max-w-xl text-muted">Unions are ranked by verified points. Only results approved by faculty count.</p>
       </section>
 
       {!rows ? (
         <Skeleton className="h-72" />
       ) : ranked.length === 0 ? (
         <Empty icon={Trophy} title="No verified points yet" action={<Link to="/claims" className={btn.primary}>Submit a result</Link>}>
-          Once faculty approve a group’s first result, it appears here.
+          Once faculty approve a union’s first result, it appears here.
         </Empty>
       ) : (
         <>
@@ -124,7 +124,7 @@ export default function LeaderboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-2 truncate font-semibold">
                           {g.name}
-                          {isMine && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-500">Your group</span>}
+                          {isMine && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-500">Your union</span>}
                         </p>
                         <div className="mt-1 flex items-center gap-3 text-xs text-muted">
                           <span className="flex items-center gap-1.5">
@@ -155,7 +155,7 @@ export default function LeaderboardPage() {
             </ol>
             {unranked.length > 0 && (
               <p className="mt-4 flex items-center gap-2 text-sm text-muted">
-                <Users size={15} /> {unranked.length} more group{unranked.length > 1 ? 's' : ''} without verified points yet.
+                <Users size={15} /> {unranked.length} more union{unranked.length > 1 ? 's' : ''} without verified points yet.
               </p>
             )}
           </section>
@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
       <section className="glass rounded-3xl p-6">
         <h2 className="font-display text-lg font-semibold">How points work</h2>
         <p className="mt-1 text-sm text-muted">
-          Base points by result, multiplied by who hosted the event. When groups enter an event together, every group in the team receives the full points.
+          Base points by result, multiplied by who hosted the event. When unions enter an event together, every union in the team receives the full points.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[28rem] text-sm">

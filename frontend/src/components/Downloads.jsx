@@ -59,7 +59,7 @@ export default function Downloads() {
     <section id="downloads" className="relative px-5 py-28">
       <Glow className="top-1/3 -right-40" />
       <div className="relative mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Resources" title={<>Download the <span className="text-gradient">project files</span></>}>
+        <SectionHeading title={<>Download the <span className="text-gradient">project files</span></>}>
           The abstract, design document, diagrams and quick guides for UNITE. Preview them here or download a copy.
         </SectionHeading>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

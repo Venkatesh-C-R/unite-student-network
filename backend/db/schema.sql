@@ -114,10 +114,10 @@ CREATE TABLE IF NOT EXISTS collab_group (
 CREATE TABLE IF NOT EXISTS group_member (
   group_id   INT UNSIGNED NOT NULL,
   user_id    INT UNSIGNED NOT NULL,
-  role       ENUM('owner','member') NOT NULL DEFAULT 'member',
+  role       ENUM('owner','deputy','member') NOT NULL DEFAULT 'member', -- owner = leader, deputy = second in command
   joined_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (group_id, user_id),
-  INDEX ix_member_user (user_id),
+  UNIQUE KEY uq_one_union (user_id),              -- a student belongs to at most one union
   CONSTRAINT fk_gm_group FOREIGN KEY (group_id) REFERENCES collab_group(id) ON DELETE CASCADE,
   CONSTRAINT fk_gm_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

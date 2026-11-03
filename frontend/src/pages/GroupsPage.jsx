@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Clock, Compass, Crown, Inbox, Plus, Search, Sparkles, Trophy, Users, X } from 'lucide-react'
+import { Clock, Compass, Crown, Shield, Inbox, Plus, Search, Sparkles, Trophy, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api } from '../api'
@@ -11,9 +11,10 @@ import { btn, input } from '../lib/styles'
 const MAX = 6
 
 // Why can't I ask to join this group? (null = I can)
-function blocker(group, user) {
+function blocker(group, user, inUnion) {
   if (group.myRole) return 'You’re a member'
-  if (group.memberCount >= MAX) return 'Group is full'
+  if (inUnion) return 'You’re already in a union'
+  if (group.memberCount >= MAX) return 'Union is full'
   if (group.programmes?.some((p) => p.id === user.programmeId)) return 'Your programme is taken'
   return null
 }
@@ -35,7 +36,12 @@ function GroupCard({ group, footer, index = 0 }) {
         </div>
         {group.myRole === 'owner' && (
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-semibold text-amber-500">
-            <Crown size={12} /> Owner
+            <Crown size={12} /> Leader
+          </span>
+        )}
+        {group.myRole === 'deputy' && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-1 text-xs font-semibold text-violet-500">
+            <Shield size={12} /> Second in command
           </span>
         )}
       </div>
@@ -83,18 +89,18 @@ function CreateGroupDialog({ open, onClose, onCreated }) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Create a group">
+    <Dialog open={open} onClose={onClose} title="Create a union">
       <p className="-mt-2 mb-4 text-sm text-muted">You’ll be the owner and first member. Up to five more students can join — each from a different programme.</p>
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label htmlFor="g-name" className="mb-1.5 block text-sm font-semibold">
-            Group name
+            Union name
           </label>
           <input id="g-name" className={input} value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="e.g. Team Nova" required autoFocus />
         </div>
         <div>
           <label htmlFor="g-desc" className="mb-1.5 block text-sm font-semibold">
-            What is the group about? <span className="font-normal text-muted">(optional)</span>
+            What is the union about? <span className="font-normal text-muted">(optional)</span>
           </label>
           <textarea
             id="g-desc"
@@ -112,7 +118,7 @@ function CreateGroupDialog({ open, onClose, onCreated }) {
             Cancel
           </button>
           <button disabled={busy || name.trim().length < 3} className={btn.primary}>
-            {busy ? 'Creating…' : 'Create group'}
+            {busy ? 'Creating…' : 'Create union'}
           </button>
         </div>
       </form>
@@ -159,7 +165,7 @@ export default function GroupsPage() {
     setBusyId(group.id)
     try {
       await api(`/groups/${group.id}/join-requests`, { method: 'POST', body: {} })
-      toast(`Request sent to ${group.name}. The owner will review it.`)
+      toast(`Request sent to ${group.name}.`)
       await loadMine()
     } catch (e) {
       toast(e.message, 'error')
@@ -195,19 +201,23 @@ export default function GroupsPage() {
             {user.programmeName && <ProgrammeChip id={user.programmeId} level={user.programmeLevel} name={user.programmeName} className="mt-3" />}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setCreating(true)} className={btn.primary}>
-              <Plus size={17} /> Create group
-            </button>
-            <a href="#explore" className={btn.ghost}>
-              <Compass size={17} /> Explore groups
-            </a>
+            {mine?.groups.length === 0 && (
+              <>
+                <button onClick={() => setCreating(true)} className={btn.primary}>
+                  <Plus size={17} /> Create union
+                </button>
+                <a href="#explore" className={btn.ghost}>
+                  <Compass size={17} /> Explore unions
+                </a>
+              </>
+            )}
           </div>
         </div>
         <dl className="relative mt-6 grid grid-cols-3 gap-3">
           {[
-            ['My groups', mine ? mine.groups.length : '–', Users],
+            ['My unions', mine ? mine.groups.length : '–', Users],
             ['Requests to review', mine ? ownerInbox : '–', Inbox],
-            ['Points (my groups)', mine ? formatPoints(totalPoints) : '–', Trophy],
+            ['Points (my unions)', mine ? formatPoints(totalPoints) : '–', Trophy],
           ].map(([label, value, Icon]) => (
             <div key={label} className="rounded-2xl bg-violet-500/10 p-3 sm:p-4">
               <dt className="flex items-center gap-1.5 text-[11px] text-muted sm:text-xs">
@@ -223,9 +233,8 @@ export default function GroupsPage() {
       <section aria-labelledby="mine-h">
         <div className="mb-4 flex items-end justify-between">
           <h2 id="mine-h" className="font-display text-2xl font-semibold">
-            My groups
+            My unions
           </h2>
-          {mine?.groups.length > 0 && <span className="text-sm text-muted">You can be in more than one group</span>}
         </div>
         {!mine ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -236,14 +245,14 @@ export default function GroupsPage() {
         ) : mine.groups.length === 0 ? (
           <Empty
             icon={Sparkles}
-            title="You’re not in a group yet"
+            title="You’re not in a union yet"
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 <button onClick={() => setCreating(true)} className={btn.primary}>
-                  <Plus size={17} /> Create a group
+                  <Plus size={17} /> Create a union
                 </button>
                 <a href="#explore" className={btn.ghost}>
-                  Find a group to join
+                  Find a union to join
                 </a>
               </div>
             }
@@ -306,13 +315,13 @@ export default function GroupsPage() {
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 id="explore-h" className="font-display text-2xl font-semibold">
-              Explore groups
+              Explore unions
             </h2>
-            <p className="text-sm text-muted">Ask to join a group that still needs your programme. The owner approves.</p>
+            <p className="text-sm text-muted">Ask to join a union that still needs your programme.</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="relative block">
-              <span className="sr-only">Search groups</span>
+              <span className="sr-only">Search unions</span>
               <Search size={17} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name" className={`${input} py-2.5 pl-11 sm:w-64`} />
             </label>
@@ -330,13 +339,13 @@ export default function GroupsPage() {
             ))}
           </div>
         ) : explore.length === 0 ? (
-          <Empty icon={Compass} title={query ? 'No groups match that name' : 'No open groups right now'} action={<button onClick={() => setCreating(true)} className={btn.primary}><Plus size={17} /> Start one</button>}>
-            {openOnly ? 'Try turning off “Has room for my programme”, or create a new group.' : 'Be the first to create one.'}
+          <Empty icon={Compass} title={query ? 'No unions match that name' : 'No open unions right now'} action={<button onClick={() => setCreating(true)} className={btn.primary}><Plus size={17} /> Start one</button>}>
+            {openOnly ? 'Try turning off “Has room for my programme”, or create a new union.' : 'Be the first to create one.'}
           </Empty>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {explore.map((g, i) => {
-              const reason = blocker(g, user)
+              const reason = blocker(g, user, mine?.groups.length > 0)
               const pending = pendingByGroup.get(g.id)
               return (
                 <GroupCard
@@ -346,7 +355,7 @@ export default function GroupsPage() {
                   footer={
                     g.myRole ? (
                       <Link to={`/groups/${g.id}`} className={`${btn.ghost} w-full`}>
-                        Open group
+                        Open union
                       </Link>
                     ) : pending ? (
                       <button onClick={() => cancelRequest(g.id, g.name)} disabled={busyId === g.id} className={`${btn.ghost} w-full`}>

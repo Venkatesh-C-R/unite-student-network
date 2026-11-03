@@ -15,7 +15,7 @@ export default function Team() {
   return (
     <section id="team" className="relative px-5 py-28">
       <div className="mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Team No. 8" title={<>The people <span className="text-gradient">behind UNITE</span></>}>
+        <SectionHeading title={<>The people <span className="text-gradient">behind UNITE</span></>}>
           MCA, Department of Computer Applications, PSG College of Technology · 26MX17 Web Application Development ·
           2026–2027
         </SectionHeading>

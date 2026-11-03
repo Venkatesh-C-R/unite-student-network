@@ -20,7 +20,7 @@ export default function Playground() {
   function add() {
     const programme = PROGRAMMES.find((p) => String(p.id) === choice)
     if (members.length >= MAX_GROUP_SIZE) {
-      reject(`Rejected: the group already has ${MAX_GROUP_SIZE} members. Team up with another group for bigger events.`)
+      reject(`Rejected: the union already has ${MAX_GROUP_SIZE} members. Team up with another union for bigger events.`)
       return
     }
     const clash = members.find((m) => m.programme.id === programme.id)
@@ -36,7 +36,7 @@ export default function Playground() {
       text: sameSubject
         ? `Accepted: ${programme.label} and ${sameSubject.programme.label} are different programmes, so both can join.`
         : `Accepted: ${name} joins from ${programme.label}. ${
-            members.length + 1 === MAX_GROUP_SIZE ? 'The group is now full.' : `${MAX_GROUP_SIZE - members.length - 1} slot(s) left.`
+            members.length + 1 === MAX_GROUP_SIZE ? 'The union is now full.' : `${MAX_GROUP_SIZE - members.length - 1} slot(s) left.`
           }`,
     })
   }
@@ -52,7 +52,7 @@ export default function Playground() {
     <section id="playground" className="relative px-5 py-28">
       <Glow className="top-1/4 -right-48" color="bg-cyan-500" />
       <div className="relative mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Try it" title={<>The <span className="text-gradient">six-programme</span> rule, live</>}>
+        <SectionHeading title={<>The <span className="text-gradient">six-programme</span> rule, live</>}>
           Build a demo group. UNITE accepts up to six students, and never two from the same programme — just like the
           real server will.
         </SectionHeading>
@@ -91,7 +91,7 @@ export default function Playground() {
                 <button
                   onClick={() => {
                     setMembers([])
-                    setMsg({ ok: true, text: 'Group cleared. Start adding students.' })
+                    setMsg({ ok: true, text: 'Union cleared. Start adding students.' })
                   }}
                   className="glass inline-flex items-center gap-2 rounded-full px-5 py-3 font-medium"
                 >
@@ -122,7 +122,7 @@ export default function Playground() {
 
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-display text-lg font-semibold">Demo group</h3>
+                <h3 className="font-display text-lg font-semibold">Demo union</h3>
                 <span className="text-sm text-muted">
                   <span className="font-bold text-ink">{members.length}</span> / {MAX_GROUP_SIZE} members
                 </span>

@@ -5,7 +5,10 @@ import { conflict, forbidden, notFound } from '../lib/errors.js'
 import { notify } from '../lib/notify.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
-import { addMember, assertCanJoin, lockGroup, MAX_GROUP_SIZE, membership } from '../services/groups.js'
+import { addMember, assertCanJoin, insertMember, lockGroup, MAX_GROUP_SIZE, membership } from '../services/groups.js'
+
+// Roles that run a union day to day: the leader (owner) and the second in command (deputy)
+const LEADS = ['owner', 'deputy']
 
 export const groupsRouter = Router()
 
@@ -22,7 +25,7 @@ async function withProgrammes(groups, userId) {
   const rows = await all(
     `SELECT gm.group_id AS groupId, gm.user_id AS userId, gm.role, p.id, p.level, p.name
        FROM group_member gm JOIN user_account u ON u.id = gm.user_id JOIN programme p ON p.id = u.programme_id
-      WHERE gm.group_id IN (?) ORDER BY gm.role = 'owner' DESC, gm.joined_at`,
+      WHERE gm.group_id IN (?) ORDER BY FIELD(gm.role, 'owner', 'deputy', 'member'), gm.joined_at`,
     [ids],
   )
   const pending = await all(
@@ -37,7 +40,7 @@ async function withProgrammes(groups, userId) {
       ...g,
       myRole,
       programmes: mine.map(({ id, level, name }) => ({ id, level, name })),
-      pendingJoinRequests: myRole === 'owner' ? pending.find((p) => p.groupId === g.id)?.n || 0 : undefined,
+      pendingJoinRequests: LEADS.includes(myRole) ? pending.find((p) => p.groupId === g.id)?.n || 0 : undefined,
     }
   })
 }
@@ -49,7 +52,7 @@ async function members(groupId) {
        FROM group_member gm
        JOIN user_account u ON u.id = gm.user_id
        JOIN programme p ON p.id = u.programme_id
-      WHERE gm.group_id = ? ORDER BY gm.role = 'owner' DESC, gm.joined_at`,
+      WHERE gm.group_id = ? ORDER BY FIELD(gm.role, 'owner', 'deputy', 'member'), gm.joined_at`,
     [groupId],
   )
 }
@@ -114,7 +117,7 @@ groupsRouter.get('/:id', requireRole('student', 'faculty', 'admin'), async (req,
   if (!group) throw notFound('Group not found.')
   const my = await membership(groupId, req.user.id)
   const result = { group, members: await members(groupId), myRole: my?.role || null, maxSize: MAX_GROUP_SIZE }
-  if (my?.role === 'owner') {
+  if (LEADS.includes(my?.role)) {
     result.joinRequests = await all(
       `SELECT r.id, r.message, r.created_at AS createdAt, u.id AS userId, u.name,
               p.id AS programmeId, p.level AS programmeLevel, p.name AS programmeName
@@ -158,7 +161,7 @@ groupsRouter.post('/:id/join-requests', requireRole('student'), async (req, res)
       throw e
     }
   })
-  const owners = await all(`SELECT user_id FROM group_member WHERE group_id = ? AND role = 'owner'`, [groupId])
+  const owners = await all(`SELECT user_id FROM group_member WHERE group_id = ? AND role IN ('owner', 'deputy')`, [groupId])
   await notify(owners.map((o) => o.user_id), 'join_request', `${req.user.name} asked to join your group.`, `/groups/${groupId}`)
   res.status(201).json({ request: { id: requestId, status: 'pending' } })
 })
@@ -172,12 +175,12 @@ groupsRouter.delete('/:id/join-requests/mine', requireRole('student'), async (re
   res.json({ ok: true })
 })
 
-// Owner approves or rejects. Approval re-checks the rules under the group lock.
+// The leader or second in command approves or rejects. Approval re-checks the rules under the group lock.
 groupsRouter.post('/:id/join-requests/:requestId/:decision', requireRole('student'), async (req, res) => {
   const p = z.object({ id, requestId: id, decision: z.enum(['approve', 'reject']) }).parse(req.params)
   const request = await withTransaction(async (conn) => {
     await lockGroup(conn, p.id)
-    if ((await membership(p.id, req.user.id, conn))?.role !== 'owner') throw forbidden('Only the group owner can decide.')
+    if (!LEADS.includes((await membership(p.id, req.user.id, conn))?.role)) throw forbidden('Only the leader or second in command can decide.')
     const r = await one(
       `SELECT id, user_id FROM group_join_request WHERE id = ? AND group_id = ? AND status = 'pending' FOR UPDATE`,
       [p.requestId, p.id],
@@ -186,7 +189,7 @@ groupsRouter.post('/:id/join-requests/:requestId/:decision', requireRole('studen
     if (!r) throw notFound('Join request not found.')
     if (p.decision === 'approve') {
       await assertCanJoin(conn, p.id, r.user_id)
-      await conn.query('INSERT INTO group_member (group_id, user_id, role) VALUES (?, ?, ?)', [p.id, r.user_id, 'member'])
+      await insertMember(conn, p.id, r.user_id)
     }
     await conn.query('UPDATE group_join_request SET status = ?, decided_by = ?, decided_at = NOW() WHERE id = ?', [
       p.decision === 'approve' ? 'approved' : 'rejected',
@@ -205,7 +208,8 @@ groupsRouter.post('/:id/join-requests/:requestId/:decision', requireRole('studen
   res.json({ ok: true, members: await members(p.id) })
 })
 
-// Leave a group, or (owner) remove a member. If the owner leaves, the longest-standing member takes over;
+// Leave a group, or (leader) remove a member. If the leader leaves, the second in command takes over,
+// otherwise the longest-standing member;
 // an empty group is deleted.
 groupsRouter.delete('/:id/members/:userId', requireRole('student'), async (req, res) => {
   const p = z.object({ id, userId: z.union([z.literal('me'), id]) }).parse(req.params)
@@ -219,10 +223,28 @@ groupsRouter.delete('/:id/members/:userId', requireRole('student'), async (req, 
     if (!target) throw notFound('That student is not in this group.')
     await conn.query('DELETE FROM group_member WHERE group_id = ? AND user_id = ?', [p.id, targetId])
     if (target.role === 'owner') {
-      const next = await one('SELECT user_id FROM group_member WHERE group_id = ? ORDER BY joined_at, user_id LIMIT 1', [p.id], conn)
+      const next = await one(`SELECT user_id FROM group_member WHERE group_id = ? ORDER BY role = 'deputy' DESC, joined_at, user_id LIMIT 1`, [p.id], conn)
       if (next) await conn.query(`UPDATE group_member SET role = 'owner' WHERE group_id = ? AND user_id = ?`, [p.id, next.user_id])
       else await conn.query('DELETE FROM collab_group WHERE id = ?', [p.id])
     }
   })
   res.json({ ok: true })
+})
+
+// The leader names one member as second in command, or clears it with { userId: null }.
+groupsRouter.put('/:id/deputy', requireRole('student'), async (req, res) => {
+  const { id: groupId } = z.object({ id }).parse(req.params)
+  const { userId } = z.object({ userId: id.nullable() }).parse(req.body)
+  await withTransaction(async (conn) => {
+    await lockGroup(conn, groupId)
+    if ((await membership(groupId, req.user.id, conn))?.role !== 'owner') throw forbidden('Only the leader can choose the second in command.')
+    if (userId !== null && (await membership(groupId, userId, conn))?.role !== 'member') throw notFound('That student is not a member of this union.')
+    await conn.query(`UPDATE group_member SET role = 'member' WHERE group_id = ? AND role = 'deputy'`, [groupId])
+    if (userId !== null) await conn.query(`UPDATE group_member SET role = 'deputy' WHERE group_id = ? AND user_id = ?`, [groupId, userId])
+  })
+  if (userId !== null) {
+    const group = await one('SELECT name FROM collab_group WHERE id = ?', [groupId])
+    await notify(userId, 'deputy', `You are now second in command of ${group.name}.`, `/groups/${groupId}`)
+  }
+  res.json({ ok: true, members: await members(groupId) })
 })

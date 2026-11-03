@@ -242,10 +242,10 @@ function TeamStep({ event, myGroups, onPick, onBack }) {
 
       {freeGroups.length > 0 && (
         <section>
-          <h3 className="mb-2 text-sm font-semibold">{myTeams.length ? 'Or enter another of your groups' : 'Enter with one of your groups'}</h3>
+          <h3 className="mb-2 text-sm font-semibold">{myTeams.length ? 'Or enter another of your unions' : 'Enter with one of your unions'}</h3>
           <div className="flex gap-2">
-            <select className={input} value={groupId} onChange={(e) => setGroupId(e.target.value)} aria-label="Your group">
-              <option value="">Choose a group…</option>
+            <select className={input} value={groupId} onChange={(e) => setGroupId(e.target.value)} aria-label="Your union">
+              <option value="">Choose a union…</option>
               {freeGroups.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name} ({g.memberCount}/6)
@@ -269,7 +269,7 @@ function TeamStep({ event, myGroups, onPick, onBack }) {
       {ownedFree.length > 0 && otherTeams.length > 0 && (
         <section>
           <h3 className="mb-1 text-sm font-semibold">Event needs more than 6? Join an existing team</h3>
-          <p className="mb-2 text-xs text-muted">Your group joins another group’s team. Both groups stay separate and keep their own six-member limit.</p>
+          <p className="mb-2 text-xs text-muted">Your union joins another union’s team. Both unions stay separate and keep their own six-member limit.</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
             <select className={input} value={joinTeamId} onChange={(e) => setJoinTeamId(e.target.value)} aria-label="Team to join">
               <option value="">Team…</option>
@@ -279,8 +279,8 @@ function TeamStep({ event, myGroups, onPick, onBack }) {
                 </option>
               ))}
             </select>
-            <select className={input} value={groupId} onChange={(e) => setGroupId(e.target.value)} aria-label="Group you own">
-              <option value="">Group you own…</option>
+            <select className={input} value={groupId} onChange={(e) => setGroupId(e.target.value)} aria-label="Union you lead">
+              <option value="">Union you lead…</option>
               {ownedFree.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -300,7 +300,7 @@ function TeamStep({ event, myGroups, onPick, onBack }) {
 
       {myTeams.length === 0 && freeGroups.length === 0 && (
         <p className="text-sm text-muted">
-          You need to be in a group to submit a result. <Link to="/groups" className="font-semibold text-violet-600 dark:text-violet-400">Go to Groups</Link>
+          You need to be in a union to submit a result. <Link to="/groups" className="font-semibold text-violet-600 dark:text-violet-400">Go to Unions</Link>
         </p>
       )}
 
@@ -425,7 +425,7 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
       {base !== undefined && (
         <p className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
           If approved: <b>{formatPoints(base * multiplier)} points</b> ({base} × {multiplier.toFixed(1)})
-          {team.groups.length > 1 ? ' to each group in the team' : ''}.
+          {team.groups.length > 1 ? ' to each union in the team' : ''}.
         </p>
       )}
       {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
@@ -542,7 +542,7 @@ export default function ClaimsPage() {
             <h1 className="font-display text-3xl font-bold sm:text-4xl">
               Your <span className="text-gradient">achievements</span>
             </h1>
-            <p className="mt-1 max-w-xl text-muted">Won or took part in an event with your group? Submit the result with proof. Faculty verify it, then your group earns the points.</p>
+            <p className="mt-1 max-w-xl text-muted">Won or took part in an event with your union? Submit the result with proof. Faculty verify it, then your union earns the points.</p>
           </div>
           <button onClick={() => setOpen(true)} className={btn.primary}>
             <Plus size={17} /> Submit a result
@@ -590,7 +590,7 @@ export default function ClaimsPage() {
             )
           }
         >
-          {claims.length ? 'Try another filter.' : 'Results your groups submit appear here, with their review status.'}
+          {claims.length ? 'Try another filter.' : 'Results your unions submit appear here, with their review status.'}
         </Empty>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

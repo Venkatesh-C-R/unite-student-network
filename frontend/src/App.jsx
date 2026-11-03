@@ -3,7 +3,6 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { AuthProvider } from './auth'
 import { useAuth } from './context'
 import AppShell from './components/app/AppShell'
-import Cursor from './components/Cursor'
 import SignInModal from './components/SignInModal'
 import AdminPage from './pages/AdminPage'
 import ClaimsPage from './pages/ClaimsPage'
@@ -19,9 +18,9 @@ import { ToastProvider } from './toast'
 
 function initialTheme() {
   try {
-    return localStorage.getItem('unite-theme') || 'dark'
+    return localStorage.getItem('unite-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
   } catch {
-    return 'dark'
+    return 'light'
   }
 }
 
@@ -62,7 +61,6 @@ export default function App() {
   return (
     <AuthProvider onOpenSignIn={openSignIn}>
       <ToastProvider>
-        <Cursor />
         <Routes>
           <Route path="/" element={<Landing theme={theme} onToggleTheme={toggleTheme} />} />
           <Route element={<AppShell theme={theme} onToggleTheme={toggleTheme} />}>

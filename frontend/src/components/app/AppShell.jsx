@@ -8,7 +8,7 @@ import { btn } from '../../lib/styles'
 import NotificationsBell from './NotificationsBell'
 
 const STUDENT_NAV = [
-  ['/groups', 'Groups', Users],
+  ['/groups', 'Unions', Users],
   ['/discover', 'Discover', Search],
   ['/claims', 'Claims', Award],
   ['/leaderboard', 'Leaderboard', Trophy],
@@ -17,7 +17,7 @@ const STUDENT_NAV = [
 // Faculty and admins review claims instead of submitting them
 const STAFF_NAV = [
   ['/review', 'Review', ClipboardCheck],
-  ['/groups', 'Groups', Users],
+  ['/groups', 'Unions', Users],
   ['/discover', 'Discover', Search],
   ['/leaderboard', 'Leaderboard', Trophy],
   ['/profile', 'Profile', User],
@@ -25,7 +25,7 @@ const STAFF_NAV = [
 const ADMIN_NAV = [
   ['/review', 'Review', ClipboardCheck],
   ['/admin', 'Admin', ShieldCheck],
-  ['/groups', 'Groups', Users],
+  ['/groups', 'Unions', Users],
   ['/leaderboard', 'Leaderboard', Trophy],
   ['/profile', 'Profile', User],
 ]
@@ -42,16 +42,13 @@ export default function AppShell({ theme, onToggleTheme }) {
 
   return (
     <div className="relative min-h-[100svh]">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-indigo-600 opacity-20 blur-[140px]" />
-        <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-cyan-500 opacity-15 blur-[140px]" />
-      </div>
 
-      <header className="glass sticky top-0 z-40 border-x-0 border-t-0">
+      <header className="sticky top-0 z-40 border-b border-line bg-surface">
+        <div className="h-1 bg-violet-500" />
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/" className="flex items-center gap-2" aria-label="UNITE home">
             <Logo size={30} />
-            <span className="font-display text-lg font-bold tracking-widest">UNITE</span>
+            <span className="text-lg font-bold text-violet-500">UNITE</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
             {NAV.map(([to, label, Icon]) => (
@@ -60,8 +57,8 @@ export default function AppShell({ theme, onToggleTheme }) {
                 to={to}
                 title={label}
                 className={({ isActive }) =>
-                  `inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition lg:px-4 ${
-                    isActive ? 'bg-violet-500/15 text-ink' : 'text-muted hover:text-ink'
+                  `inline-flex h-16 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition lg:px-4 ${
+                    isActive ? 'border-violet-500 text-violet-500' : 'border-transparent text-muted hover:text-violet-500'
                   }`
                 }
               >
@@ -107,7 +104,6 @@ export default function AppShell({ theme, onToggleTheme }) {
         ) : (
           <div className="glass mx-auto mt-16 max-w-md rounded-3xl p-8 text-center">
             <h1 className="font-display text-2xl font-bold">Sign in to continue</h1>
-            <p className="mt-2 text-muted">Groups, polls and the leaderboard are for PSG students with a UNITE account.</p>
             <button onClick={openSignIn} className={`${btn.primary} mt-6`}>
               Sign in
             </button>
@@ -116,7 +112,7 @@ export default function AppShell({ theme, onToggleTheme }) {
       </main>
 
       {user && (
-        <nav className="glass fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Main">
+        <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-surface z-40 grid grid-cols-5 pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Main">
           {NAV.map(([to, label, Icon]) => (
             <NavLink
               key={to}

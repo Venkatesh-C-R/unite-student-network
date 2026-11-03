@@ -22,9 +22,9 @@ function Counter({ to, suffix = '' }) {
 }
 
 const STATS = [
-  { value: 6, label: 'Max members per group' },
+  { value: 6, label: 'Max members per union' },
   { value: PROGRAMMES.length, label: 'Eligible programmes' },
-  { value: 1, label: 'Student per programme, per group' },
+  { value: 1, label: 'Student per programme, per union' },
   { value: 3, label: 'Event tiers: College, State, National' },
 ]
 
@@ -35,10 +35,10 @@ const BEFORE = [
   'Meetups are planned in noisy chat threads',
 ]
 const AFTER = [
-  'Groups mix up to six different programmes by design',
+  'Unions mix up to six different programmes by design',
   'Discover students by interests and connect with a request',
   'Results are backed by proof and verified by faculty',
-  'Groups decide meetups and plans with simple polls',
+  'Unions decide meetups and plans with simple polls',
 ]
 
 export default function About() {
@@ -46,7 +46,7 @@ export default function About() {
     <section id="about" className="relative px-5 py-28">
       <Glow className="top-40 -left-48" color="bg-indigo-600" />
       <div className="relative mx-auto max-w-6xl">
-        <SectionHeading eyebrow="Why UNITE" title={<>Great ideas happen <span className="text-gradient">between</span> disciplines</>}>
+        <SectionHeading title={<>Great ideas happen <span className="text-gradient">between</span> disciplines</>}>
           Most student teams are built from one classroom. UNITE helps you meet people from other programmes and build
           teams that bring different skills to the table.
         </SectionHeading>

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { FAQS } from '../data'
+import { FAQS, RULES } from '../data'
 import { Reveal, SectionHeading } from './ui'
 
 export default function Faq() {
@@ -9,13 +9,21 @@ export default function Faq() {
   return (
     <section id="faq" className="relative px-5 py-28">
       <div className="mx-auto max-w-3xl">
-        <SectionHeading eyebrow="FAQ" title={<>Questions, <span className="text-gradient">answered</span></>} />
+        <SectionHeading title="Rules & FAQ" />
+        <ol className="mb-10 space-y-3 rounded-md bg-bg-2 p-6">
+          {RULES.map((rule, i) => (
+            <li key={rule} className="flex items-center gap-4">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded bg-violet-500 font-bold text-white">{i + 1}</span>
+              {rule}
+            </li>
+          ))}
+        </ol>
         <div className="space-y-3">
           {FAQS.map((f, i) => {
             const isOpen = open === i
             return (
               <Reveal key={f.q} delay={i * 0.04} y={16}>
-                <div className={`glass overflow-hidden rounded-2xl transition-colors ${isOpen ? 'border-violet-400/60' : ''}`}>
+                <div className={`overflow-hidden rounded-md border border-line bg-surface transition-colors ${isOpen ? 'border-violet-400/60' : ''}`}>
                   <button
                     onClick={() => setOpen(isOpen ? -1 : i)}
                     className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left font-semibold"
@@ -24,7 +32,7 @@ export default function Faq() {
                     {f.q}
                     <motion.span
                       animate={{ rotate: isOpen ? 45 : 0 }}
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${isOpen ? 'bg-gradient-brand text-white' : 'bg-violet-500/10'}`}
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded ${isOpen ? 'bg-violet-500 text-white' : 'bg-violet-500/10'}`}
                     >
                       <Plus size={16} />
                     </motion.span>

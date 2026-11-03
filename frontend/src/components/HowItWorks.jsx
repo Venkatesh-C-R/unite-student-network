@@ -11,7 +11,7 @@ export default function HowItWorks() {
   return (
     <section id="how" className="relative px-5 py-28">
       <div className="mx-auto max-w-4xl">
-        <SectionHeading eyebrow="How it works" title={<>From sign-up to the <span className="text-gradient">leaderboard</span></>} />
+        <SectionHeading title={<>From sign-up to the <span className="text-gradient">leaderboard</span></>} />
 
         <div ref={ref} className="relative">
           <div className="absolute top-0 bottom-0 left-6 w-0.5 bg-violet-500/15 sm:left-1/2 sm:-translate-x-1/2" />

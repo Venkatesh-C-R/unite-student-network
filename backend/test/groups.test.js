@@ -132,3 +132,36 @@ test('blocking hides a student from discovery and ends the friendship', async ()
   assert.equal(search.body.students.length, 0)
   assert.equal((await b.agent.get(`/api/students/${a.id}`)).status, 404)
 })
+
+test('second in command approves requests, cannot appoint, and takes over when the leader leaves', async () => {
+  const leader = await signedIn(app, { programmeId: P.BE_CSE })
+  const deputy = await signedIn(app, { programmeId: P.BE_MECH })
+  const g = await createGroup(leader)
+  await join(leader, deputy, g)
+  const set = await leader.agent.put(`/api/groups/${g}/deputy`).send({ userId: deputy.id })
+  assert.equal(set.status, 200, JSON.stringify(set.body))
+  assert.equal((await deputy.agent.put(`/api/groups/${g}/deputy`).send({ userId: null })).status, 403)
+
+  await join(deputy, await signedIn(app, { programmeId: P.MCA }), g)
+  assert.equal(await memberCount(g), 3)
+
+  assert.equal((await leader.agent.delete(`/api/groups/${g}/members/me`)).status, 200)
+  assert.equal((await deputy.agent.get(`/api/groups/${g}`)).body.myRole, 'owner')
+})
+
+test('a student can be in only one union, and joining cancels other requests', async () => {
+  const a = await signedIn(app, { programmeId: P.BE_CSE })
+  const b = await signedIn(app, { programmeId: P.BE_MECH })
+  const student = await signedIn(app, { programmeId: P.MCA })
+  const g1 = await createGroup(a, 'Union One')
+  const g2 = await createGroup(b, 'Union Two')
+  const r2 = await requestJoin(student, g2)
+  assert.equal(r2.status, 201)
+  await join(a, student, g1)
+
+  const again = await requestJoin(student, g2)
+  assert.equal(again.status, 409)
+  assert.equal(again.body.error, 'already_in_union')
+  assert.equal((await approve(b, g2, r2.body.request.id)).status, 404)
+  assert.equal((await student.agent.post('/api/groups').send({ name: 'Third' })).status, 409)
+})
