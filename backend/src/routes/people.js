@@ -68,12 +68,15 @@ peopleRouter.put('/me/profile', async (req, res) => {
       about: text(600).default(''),
       interests: z.array(text(40, 1).toLowerCase()).max(15).default([]),
       links: z.array(z.object({ label: text(40, 1), url: httpUrl })).max(10).default([]),
+      // Students keep their year of study up to date themselves
+      year: z.coerce.number().int().min(1).max(5).optional(),
     })
     .parse(req.body)
   const interests = [...new Set(body.interests)]
 
   await withTransaction(async (conn) => {
     await conn.query('UPDATE user_account SET about = ? WHERE id = ?', [body.about, req.user.id])
+    if (body.year && req.user.role === 'student') await conn.query('UPDATE user_account SET year = ? WHERE id = ?', [body.year, req.user.id])
     await conn.query('DELETE FROM student_interest WHERE user_id = ?', [req.user.id])
     if (interests.length)
       await conn.query('INSERT INTO student_interest (user_id, interest) VALUES ?', [interests.map((i) => [req.user.id, i])])

@@ -82,7 +82,9 @@ function InterestInput({ value, onChange, suggestions }) {
 
 function AboutTab({ profile, onSaved }) {
   const toast = useToast()
+  const { user, setUser } = useAuth()
   const [about, setAbout] = useState(profile.about)
+  const [year, setYear] = useState(profile.year || 1)
   const [interests, setInterests] = useState(profile.interests)
   const [links, setLinks] = useState(profile.links.length ? profile.links : [])
   const [popular, setPopular] = useState([])
@@ -95,7 +97,7 @@ function AboutTab({ profile, onSaved }) {
   }, [])
 
   const dirty =
-    about !== profile.about || JSON.stringify(interests) !== JSON.stringify(profile.interests) || JSON.stringify(links) !== JSON.stringify(profile.links)
+    about !== profile.about || year !== (profile.year || 1) || JSON.stringify(interests) !== JSON.stringify(profile.interests) || JSON.stringify(links) !== JSON.stringify(profile.links)
   const linkErrors = links.map((l) => (!l.label.trim() ? 'Add a label' : !isHttpUrl(l.url.trim()) ? 'Use a full https:// link' : null))
   const valid = linkErrors.every((e) => !e)
 
@@ -105,10 +107,11 @@ function AboutTab({ profile, onSaved }) {
     try {
       const { profile: saved } = await api('/me/profile', {
         method: 'PUT',
-        body: { about, interests, links: links.map((l) => ({ label: l.label.trim(), url: l.url.trim() })) },
+        body: { about, year, interests, links: links.map((l) => ({ label: l.label.trim(), url: l.url.trim() })) },
       })
       // The parent re-keys this form with the saved profile, which resets the fields
       onSaved(saved)
+      setUser({ ...user, year: saved.year })
       toast('Profile saved.')
     } catch (err) {
       toast(err.message, 'error')
@@ -119,6 +122,21 @@ function AboutTab({ profile, onSaved }) {
 
   return (
     <form onSubmit={save} className="space-y-8">
+      {profile.role === 'student' && (
+        <section>
+          <label htmlFor="year" className="font-display text-lg font-semibold">
+            Year of study
+          </label>
+          <select id="year" value={year} onChange={(e) => setYear(Number(e.target.value))} className={`${input} mt-2 w-32`}>
+            {[1, 2, 3, 4, 5].map((y) => (
+              <option key={y} value={y}>
+                Year {y}
+              </option>
+            ))}
+          </select>
+        </section>
+      )}
+
       <section>
         <label htmlFor="about" className="font-display text-lg font-semibold">
           About
