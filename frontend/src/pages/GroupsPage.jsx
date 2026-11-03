@@ -137,7 +137,35 @@ export default function GroupsPage() {
   const [creating, setCreating] = useState(false)
   const [busyId, setBusyId] = useState(null)
 
-  const loadMine = useCallback(() => api('/groups/mine').then(setMine).catch((e) => toast(e.message, 'error')), [toast])
+  const [invites, setInvites] = useState([])
+
+  const loadMine = useCallback(
+    () =>
+      // Only students receive union invites
+      Promise.all([api('/groups/mine'), user.role === 'student' ? api('/invites') : { invites: [] }])
+        .then(([m, i]) => {
+          setMine(m)
+          setInvites(i.invites)
+        })
+        .catch((e) => toast(e.message, 'error')),
+    [toast, user.role],
+  )
+
+  async function answerInvite(invite, decision) {
+    setBusyId(`inv-${invite.id}`)
+    try {
+      await api(`/invites/${invite.id}/${decision}`, { method: 'POST' })
+      if (decision === 'accept') {
+        toast(`You joined ${invite.groupName}.`)
+        navigate(`/groups/${invite.groupId}`)
+      } else await loadMine()
+    } catch (e) {
+      toast(e.message, 'error')
+      await loadMine()
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   useEffect(() => {
     loadMine()
@@ -228,6 +256,31 @@ export default function GroupsPage() {
           ))}
         </dl>
       </section>
+
+      {invites.length > 0 && (
+        <section aria-labelledby="inv-h">
+          <h2 id="inv-h" className="mb-4 font-display text-2xl font-semibold">
+            Invitations
+          </h2>
+          <ul className="space-y-3">
+            {invites.map((inv) => (
+              <li key={inv.id} className="glass flex flex-wrap items-center justify-between gap-3 rounded-md p-4">
+                <p>
+                  <b>{inv.inviterName || 'A member'}</b> invited you to <b>{inv.groupName}</b>
+                </p>
+                <div className="flex gap-2">
+                  <button disabled={busyId === `inv-${inv.id}`} onClick={() => answerInvite(inv, 'accept')} className={btn.primary}>
+                    Accept
+                  </button>
+                  <button disabled={busyId === `inv-${inv.id}`} onClick={() => answerInvite(inv, 'decline')} className={btn.ghost}>
+                    Decline
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* My groups */}
       <section aria-labelledby="mine-h">

@@ -5,6 +5,7 @@ import { conflict, forbidden, notFound } from '../lib/errors.js'
 import { notify } from '../lib/notify.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
+import { isBlocked } from './people.js'
 import { addMember, assertCanJoin, insertMember, lockGroup, MAX_GROUP_SIZE, membership } from '../services/groups.js'
 
 // Roles that run a union day to day: the leader (owner) and the second in command (deputy)
@@ -247,4 +248,26 @@ groupsRouter.put('/:id/deputy', requireRole('student'), async (req, res) => {
     await notify(userId, 'deputy', `You are now second in command of ${group.name}.`, `/groups/${groupId}`)
   }
   res.json({ ok: true, members: await members(groupId) })
+})
+
+// Only the leader invites a student who could join (same rules as a join request)
+groupsRouter.post('/:id/invites', requireRole('student'), async (req, res) => {
+  const { id: groupId } = z.object({ id }).parse(req.params)
+  const { userId } = z.object({ userId: id }).parse(req.body)
+  const inviteId = await withTransaction(async (conn) => {
+    await lockGroup(conn, groupId)
+    if ((await membership(groupId, req.user.id, conn))?.role !== 'owner') throw forbidden('Only the union leader can invite students.')
+    if (await isBlocked(req.user.id, userId, conn)) throw notFound('Student not found.')
+    await assertCanJoin(conn, groupId, userId)
+    try {
+      const [r] = await conn.query('INSERT INTO group_invite (group_id, inviter_id, invitee_id) VALUES (?, ?, ?)', [groupId, req.user.id, userId])
+      return r.insertId
+    } catch (e) {
+      if (e.code === 'ER_DUP_ENTRY') throw conflict('This student already has an invite to this union.', 'already_invited')
+      throw e
+    }
+  })
+  const group = await one('SELECT name FROM collab_group WHERE id = ?', [groupId])
+  await notify(userId, 'union_invite', `${req.user.name} invited you to join ${group.name}.`, '/groups')
+  res.status(201).json({ invite: { id: inviteId, status: 'pending' } })
 })

@@ -131,6 +131,7 @@ export const RULES = [
   'A student can be in only one union at a time.',
   'A union has up to six members, each from a different programme.',
   'Each union has one leader and can have one second in command.',
+  'Ask a union’s leader to join, or get invited by its leader.',
   'The leader or second in command approves join requests.',
   'If the leader leaves, the second in command takes over.',
   'Only results approved by faculty earn points.',

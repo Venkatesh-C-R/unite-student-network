@@ -9,7 +9,7 @@ brew services start mysql      # MySQL must be running
 npm install
 npm run db:setup               # creates tables + loads the 42 programmes (safe to re-run)
 npm run dev                    # http://localhost:4000, restarts on file changes
-npm test                       # 25 integration tests against the unite_test database
+npm test                       # 27 integration tests against the unite_test database
 npm run seed:demo              # optional: demo students, groups, a poll and points (dev database only)
 ```
 
@@ -41,7 +41,7 @@ npm run staff -- --email someone@psgtech.ac.in --name "Dr. V. Umarani" --role fa
 | Topic | Current rule | Where |
 |---|---|---|
 | Group size / programmes | Max 6, one per programme, checked under a row lock on the group | `src/services/groups.js` |
-| Joining | Request → leader or second in command approves; a student may be in only one union (unique key), and joining cancels their other requests | `src/routes/groups.js` |
+| Joining | Request → leader or second in command approves; a student may be in only one union (unique key), and joining cancels their other requests and invites. The leader can also invite a student, who accepts or declines | `src/routes/groups.js` |
 | Leadership | Groups are called unions in the app. The creator is leader (`owner`); the leader can name one second in command (`deputy`), who can also approve join requests | `src/routes/groups.js` |
 | Leader leaves | Second in command becomes leader, else the longest-standing member; empty group is deleted | `src/routes/groups.js` |
 | Sign-up | Only `rollno@psgtech.ac.in`; OTP (6 digits, 10 min, 5 tries) then password | `src/routes/auth.js`, `src/config.js` |
@@ -62,7 +62,8 @@ All paths start with `/api`. Send `X-UNITE: 1` on every non-GET request.
 - **Profile & people:** `GET/PUT /me/profile`, `GET /students?q=&programmeId=&interest=`, `GET /students/suggested`, `GET /students/:id`
 - **Friends:** `GET /friends`, `GET /friends/requests`, `POST /friends/requests`, `POST /friends/requests/:id/accept|reject|cancel`, `DELETE /friends/:userId`
 - **Safety:** `GET/POST /blocks`, `DELETE /blocks/:userId`, `POST /reports`
-- **Groups:** `GET /groups`, `GET /groups/mine`, `POST /groups`, `GET/PATCH /groups/:id`, `POST /groups/:id/join-requests`, `DELETE /groups/:id/join-requests/mine`, `POST /groups/:id/join-requests/:rid/approve|reject`, `PUT /groups/:id/deputy`, `DELETE /groups/:id/members/:userId|me`
+- **Groups:** `GET /groups`, `GET /groups/mine`, `POST /groups`, `GET/PATCH /groups/:id`, `POST /groups/:id/join-requests`, `DELETE /groups/:id/join-requests/mine`, `POST /groups/:id/join-requests/:rid/approve|reject`, `PUT /groups/:id/deputy`, `POST /groups/:id/invites`, `DELETE /groups/:id/members/:userId|me`
+- **Invites:** `GET /invites`, `POST /invites/:id/accept|decline`
 - **Polls:** `GET/POST /groups/:id/polls`, `POST /polls/:id/vote`
 - **Events:** `GET/POST /events`, `GET /events/:id`, `POST /events/:id/teams`, `POST /events/:id/teams/:teamId/groups`
 - **Achievements:** `POST /achievements` (multipart, field `evidence`), `GET /achievements/mine`, `GET /achievements/:id`, `GET /evidence/:id`

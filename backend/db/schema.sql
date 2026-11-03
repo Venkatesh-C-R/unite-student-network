@@ -122,6 +122,24 @@ CREATE TABLE IF NOT EXISTS group_member (
   CONSTRAINT fk_gm_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- A union member invites a student; the student accepts or declines
+CREATE TABLE IF NOT EXISTS group_invite (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  group_id    INT UNSIGNED NOT NULL,
+  inviter_id  INT UNSIGNED NULL,
+  invitee_id  INT UNSIGNED NOT NULL,
+  status      ENUM('pending','accepted','declined','cancelled') NOT NULL DEFAULT 'pending',
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  decided_at  DATETIME NULL,
+  -- at most one pending invite per (group, student): NULL for non-pending rows
+  pending_key TINYINT AS (IF(status = 'pending', 1, NULL)) STORED,
+  UNIQUE KEY uq_one_pending_invite (group_id, invitee_id, pending_key),
+  INDEX ix_invite_invitee (invitee_id, status),
+  CONSTRAINT fk_gi_group FOREIGN KEY (group_id) REFERENCES collab_group(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gi_inviter FOREIGN KEY (inviter_id) REFERENCES user_account(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gi_invitee FOREIGN KEY (invitee_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS group_join_request (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   group_id    INT UNSIGNED NOT NULL,

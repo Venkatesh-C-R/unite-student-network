@@ -165,3 +165,26 @@ test('a student can be in only one union, and joining cancels other requests', a
   assert.equal((await approve(b, g2, r2.body.request.id)).status, 404)
   assert.equal((await student.agent.post('/api/groups').send({ name: 'Third' })).status, 409)
 })
+
+test('only the leader invites; the student accepts and joins', async () => {
+  const leader = await signedIn(app, { programmeId: P.BE_CSE })
+  const member = await signedIn(app, { programmeId: P.BE_MECH })
+  const invitee = await signedIn(app, { programmeId: P.MCA })
+  const sameProg = await signedIn(app, { programmeId: P.BE_CSE })
+  const g = await createGroup(leader)
+  await join(leader, member, g)
+
+  assert.equal((await member.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })).status, 403)
+  const inv = await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })
+  assert.equal(inv.status, 201, JSON.stringify(inv.body))
+  assert.equal((await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: invitee.id })).status, 409)
+  assert.equal((await leader.agent.post(`/api/groups/${g}/invites`).send({ userId: sameProg.id })).body.error, 'programme_taken')
+  assert.equal((await invitee.agent.post(`/api/groups/${g}/invites`).send({ userId: sameProg.id })).status, 403)
+
+  const list = await invitee.agent.get('/api/invites')
+  assert.equal(list.body.invites.length, 1)
+  const ok = await invitee.agent.post(`/api/invites/${inv.body.invite.id}/accept`)
+  assert.equal(ok.status, 200, JSON.stringify(ok.body))
+  assert.equal(await memberCount(g), 3)
+  assert.equal((await invitee.agent.post(`/api/invites/${inv.body.invite.id}/accept`)).status, 404)
+})

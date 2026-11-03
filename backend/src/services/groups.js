@@ -50,9 +50,13 @@ export async function insertMember(conn, groupId, userId, role = 'member') {
     if (e.code === 'ER_DUP_ENTRY') throw conflict('A student can be in only one union.', 'already_in_union')
     throw e
   }
-  // Other pending requests no longer make sense once the student is in a union
+  // Other pending requests and invites no longer make sense once the student is in a union
   await conn.query(
     `UPDATE group_join_request SET status = 'cancelled', decided_at = NOW() WHERE user_id = ? AND status = 'pending' AND group_id <> ?`,
+    [userId, groupId],
+  )
+  await conn.query(
+    `UPDATE group_invite SET status = 'cancelled', decided_at = NOW() WHERE invitee_id = ? AND status = 'pending' AND group_id <> ?`,
     [userId, groupId],
   )
 }
