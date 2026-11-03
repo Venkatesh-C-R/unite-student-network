@@ -15,7 +15,7 @@ export function Avatar({ name, size = 40, color }) {
   return (
     <span
       className="grid shrink-0 place-items-center rounded-full font-display font-bold text-white"
-      style={{ width: size, height: size, fontSize: size * 0.36, background: color || 'linear-gradient(120deg,#4f46e5,#8b5cf6,#06b6d4)' }}
+      style={{ width: size, height: size, fontSize: size * 0.36, background: color || 'linear-gradient(120deg,#9a1916,#c8231f,#d8a227)' }}
       aria-hidden="true"
     >
       {initials}

@@ -8,9 +8,31 @@ export class ApiError extends Error {
   }
 }
 
+// Count state-changing requests in flight so the UI can show it is working (BusyStar)
+let pending = 0
+const listeners = new Set()
+function setPending(delta) {
+  pending += delta
+  listeners.forEach((fn) => fn(pending > 0))
+}
+export function onBusyChange(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
 // `body` may be a plain object (sent as JSON) or FormData (sent as multipart, e.g. evidence files)
 export async function api(path, { method = 'GET', body } = {}) {
   const isForm = body instanceof FormData
+  const tracked = method !== 'GET'
+  if (tracked) setPending(1)
+  try {
+    return await request(path, method, body, isForm)
+  } finally {
+    if (tracked) setPending(-1)
+  }
+}
+
+async function request(path, method, body, isForm) {
   let res
   try {
     res = await fetch(`/api${path}`, {

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { AuthProvider } from './auth'
 import { useAuth } from './context'
 import AppShell from './components/app/AppShell'
+import BusyStar from './components/BusyStar'
 import SignInModal from './components/SignInModal'
 import AdminPage from './pages/AdminPage'
 import ClaimsPage from './pages/ClaimsPage'
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <SignIn open={signIn} onClose={closeSignIn} />
+        <BusyStar />
       </ToastProvider>
     </AuthProvider>
   )

@@ -27,8 +27,8 @@ export default function Footer({ onSignIn }) {
       <div className="mx-auto mt-14 flex max-w-6xl flex-col items-center justify-between gap-6 border-t border-line pt-8 text-sm text-muted md:flex-row">
         <div className="flex items-center gap-2">
           <Logo size={26} />
-          <span className="font-display font-bold tracking-widest text-ink">UNITE</span>
-          <span className="hidden sm:inline">· University Network for Interdisciplinary Teamwork and Engagement</span>
+          <span className="wordmark font-display font-bold tracking-widest">UNITE</span>
+          <span className="hidden sm:inline">· Six programmes. One union. Forward!</span>
         </div>
         <div className="flex flex-wrap justify-center gap-5">
           {['about', 'features', 'scoring', 'downloads', 'faq'].map((id) => (

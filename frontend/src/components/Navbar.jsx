@@ -68,7 +68,7 @@ export default function Navbar({ theme, onToggleTheme, onSignIn, user, onSignOut
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5" aria-label="Main">
         <button onClick={() => go('top')} className="flex items-center gap-2" aria-label="UNITE home">
           <Logo size={34} />
-          <span className="text-xl font-bold text-violet-500">UNITE</span>
+          <span className="wordmark text-xl font-bold">UNITE</span>
         </button>
 
         <ul className="hidden h-full items-stretch lg:flex">
