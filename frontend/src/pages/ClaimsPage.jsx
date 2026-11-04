@@ -500,6 +500,7 @@ const FILTERS = [
   ['pending', 'Pending'],
   ['approved', 'Verified'],
   ['rejected', 'Not approved'],
+  ['withdrawn', 'Withdrawn'],
 ]
 
 export default function ClaimsPage() {

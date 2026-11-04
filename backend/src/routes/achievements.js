@@ -142,7 +142,7 @@ const CLAIM_REF = /^#?\s*(?:clm)?[\s#-]*0*(\d{1,9})$/i
 // student name, roll number and event title across all statuses.
 achievementsRouter.get('/review/achievements', requireRole('faculty', 'admin'), async (req, res) => {
   const { status, q } = z
-    .object({ status: z.enum(['pending', 'approved', 'rejected']).default('pending'), q: z.string().trim().max(100).optional() })
+    .object({ status: z.enum(['pending', 'approved', 'rejected', 'withdrawn']).default('pending'), q: z.string().trim().max(100).optional() })
     .parse(req.query)
   let rows
   if (q) {

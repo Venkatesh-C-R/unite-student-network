@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { all, one, pool } from '../db.js'
+import { all, one, pool, withTransaction } from '../db.js'
 import { badRequest, conflict, notFound } from '../lib/errors.js'
 import { notify } from '../lib/notify.js'
 import { id, text } from '../lib/validate.js'
 import { requireRole } from '../middleware/auth.js'
+import { assertCanJoin, insertMember, lockGroup } from '../services/groups.js'
 import { logActivity } from '../lib/activity.js'
 
 export const adminRouter = Router()
@@ -161,4 +162,91 @@ adminRouter.get('/activity', async (req, res) => {
   )
   const actions = await all('SELECT DISTINCT action FROM activity_log ORDER BY action')
   res.json({ activity: rows.slice(0, 50), hasMore: rows.length > 50, actions: actions.map((a) => a.action) })
+})
+
+// ---------- Reverting decisions people cannot undo themselves ----------
+
+// Everyone in a claim's team (the submitter plus every member of every union in it)
+async function claimPeople(conn, teamId, submitterId) {
+  const rows = await all(
+    `SELECT DISTINCT gm.user_id FROM team_group tg JOIN group_member gm ON gm.group_id = tg.group_id WHERE tg.team_id = ?`,
+    [teamId],
+    conn,
+  )
+  return [submitterId, ...rows.map((r) => r.user_id)]
+}
+
+// Reopen an approved or rejected claim: points are taken back and faculty review it again
+adminRouter.post('/claims/:id/reopen', async (req, res) => {
+  const { id: claimId } = z.object({ id }).parse(req.params)
+  const { reason } = z.object({ reason: text(300, 3) }).parse(req.body)
+  const claim = await withTransaction(async (conn) => {
+    const a = await one(
+      `SELECT a.id, a.status, a.team_id, a.submitter_id, e.title FROM achievement a
+         JOIN event_team t ON t.id = a.team_id JOIN event e ON e.id = t.event_id
+        WHERE a.id = ? FOR UPDATE`,
+      [claimId],
+      conn,
+    )
+    if (!a) throw notFound('Claim not found.')
+    if (!['approved', 'rejected'].includes(a.status)) throw conflict('Only approved or rejected claims can be reopened.', 'not_reviewed')
+    await conn.query('DELETE FROM points_award WHERE achievement_id = ?', [a.id])
+    await conn.query(
+      `UPDATE achievement SET status = 'pending', reviewer_id = NULL, review_note = NULL, reviewed_at = NULL,
+              base_points = NULL, multiplier = NULL, points = NULL WHERE id = ?`,
+      [a.id],
+    )
+    return a
+  })
+  const people = await claimPeople(pool, claim.team_id, claim.submitter_id)
+  await notify(people, 'claim_reopened', `An admin reopened your claim for ${claim.title}: ${reason}. Faculty will review it again.`, '/claims')
+  const reviewers = await all(`SELECT id FROM user_account WHERE role IN ('faculty','admin') AND is_active AND id <> ?`, [req.user.id])
+  await notify(reviewers.map((r) => r.id), 'review_needed', 'A reopened claim is waiting for review.', `/review/${claim.id}`)
+  await logActivity(req, 'claim_reopened', { targetType: 'claim', targetId: claim.id, details: `was ${claim.status}: ${reason}` })
+  res.json({ ok: true })
+})
+
+// Withdraw a claim a student submitted by mistake; the team may then submit a new one
+adminRouter.post('/claims/:id/withdraw', async (req, res) => {
+  const { id: claimId } = z.object({ id }).parse(req.params)
+  const { reason } = z.object({ reason: text(300, 3) }).parse(req.body)
+  const claim = await withTransaction(async (conn) => {
+    const a = await one(
+      `SELECT a.id, a.status, a.team_id, a.submitter_id, e.title FROM achievement a
+         JOIN event_team t ON t.id = a.team_id JOIN event e ON e.id = t.event_id
+        WHERE a.id = ? FOR UPDATE`,
+      [claimId],
+      conn,
+    )
+    if (!a) throw notFound('Claim not found.')
+    if (a.status === 'withdrawn') throw conflict('This claim is already withdrawn.', 'already_withdrawn')
+    await conn.query('DELETE FROM points_award WHERE achievement_id = ?', [a.id])
+    await conn.query(
+      `UPDATE achievement SET status = 'withdrawn', reviewer_id = ?, review_note = ?, reviewed_at = NOW(),
+              base_points = NULL, multiplier = NULL, points = NULL WHERE id = ?`,
+      [req.user.id, reason, a.id],
+    )
+    return a
+  })
+  const people = await claimPeople(pool, claim.team_id, claim.submitter_id)
+  await notify(people, 'claim_withdrawn', `An admin withdrew your claim for ${claim.title}: ${reason}. You can submit it again.`, '/claims')
+  await logActivity(req, 'claim_withdrawn', { targetType: 'claim', targetId: claim.id, details: `was ${claim.status}: ${reason}` })
+  res.json({ ok: true })
+})
+
+// Put back a student a union leader removed (from that entry in the activity log)
+adminRouter.post('/activity/:id/restore-member', async (req, res) => {
+  const { id: logId } = z.object({ id }).parse(req.params)
+  const entry = await one(`SELECT target_id AS groupId, details FROM activity_log WHERE id = ? AND action = 'member_removed'`, [logId])
+  const studentId = Number(/#(\d+)/.exec(entry?.details || '')?.[1])
+  if (!entry || !studentId) throw notFound('That removal was not found in the activity log.')
+  await withTransaction(async (conn) => {
+    await lockGroup(conn, entry.groupId)
+    await assertCanJoin(conn, entry.groupId, studentId)
+    await insertMember(conn, entry.groupId, studentId)
+  })
+  const group = await one('SELECT name FROM collab_group WHERE id = ?', [entry.groupId])
+  await notify(studentId, 'member_restored', `An admin put you back in ${group.name}.`, `/groups/${entry.groupId}`)
+  await logActivity(req, 'member_restored', { targetType: 'union', targetId: entry.groupId, details: `student #${studentId}` })
+  res.json({ ok: true })
 })

@@ -1,5 +1,5 @@
 import { LayoutGroup, motion } from 'framer-motion'
-import { Check, ClipboardCheck, Search, ShieldAlert, X } from 'lucide-react'
+import { Check, ClipboardCheck, RotateCcw, Search, ShieldAlert, Undo2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { api } from '../api'
@@ -15,6 +15,7 @@ const TABS = [
   ['pending', 'Pending'],
   ['approved', 'Verified'],
   ['rejected', 'Not approved'],
+  ['withdrawn', 'Withdrawn'],
 ]
 
 function baseFor(result) {
@@ -114,6 +115,60 @@ function ReviewForm({ claim, onDone }) {
             </>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// Admin only: undo a decision. Reopen sends a reviewed claim back to faculty; withdraw cancels it so the team can resubmit.
+function AdminRevert({ claim, onDone }) {
+  const toast = useToast()
+  const [mode, setMode] = useState(null)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const canReopen = ['approved', 'rejected'].includes(claim.status)
+
+  async function run() {
+    setBusy(true)
+    try {
+      await api(`/admin/claims/${claim.id}/${mode}`, { method: 'POST', body: { reason: reason.trim() } })
+      toast(mode === 'reopen' ? 'Claim reopened. Its points were taken back and it is pending again.' : 'Claim withdrawn. The team can submit it again.')
+      onDone()
+    } catch (e) {
+      toast(e.message, 'error')
+      setBusy(false)
+    }
+  }
+
+  if (!mode)
+    return (
+      <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-line pt-3">
+        <span className="mr-auto self-center text-xs text-muted">Admin</span>
+        {canReopen && (
+          <button onClick={() => setMode('reopen')} className={btn.ghost}>
+            <RotateCcw size={15} /> Reopen for review
+          </button>
+        )}
+        <button onClick={() => setMode('withdraw')} className={btn.ghost}>
+          <Undo2 size={15} /> Withdraw claim
+        </button>
+      </div>
+    )
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-line bg-[var(--bg)]/40 p-4">
+      <label htmlFor={`rev-${claim.id}`} className="block text-sm font-semibold">
+        {mode === 'reopen'
+          ? `Why reopen? ${claim.status === 'approved' ? 'Its points are taken back and ' : ''}faculty review it again.`
+          : 'Why withdraw? The team can then submit it again.'}
+      </label>
+      <textarea id={`rev-${claim.id}`} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} className={`${input} min-h-16`} placeholder="The students will see this reason." />
+      <div className="flex justify-end gap-2">
+        <button onClick={() => setMode(null)} className={btn.ghost} disabled={busy}>
+          Cancel
+        </button>
+        <button onClick={run} disabled={busy || reason.trim().length < 3} className={mode === 'withdraw' ? btn.danger : btn.primary}>
+          {mode === 'reopen' ? 'Reopen claim' : 'Withdraw claim'}
+        </button>
       </div>
     </div>
   )
@@ -221,6 +276,7 @@ export default function ReviewPage() {
           {claims.map((c) => (
             <ClaimCard key={c.id} claim={c} showSubmitter>
               {c.status === 'pending' && c.submitterId !== user.id && <ReviewForm claim={c} onDone={load} />}
+              {user.role === 'admin' && c.status !== 'withdrawn' && <AdminRevert claim={c} onDone={load} />}
             </ClaimCard>
           ))}
         </div>

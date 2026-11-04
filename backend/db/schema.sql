@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS achievement (
   submitter_id  INT UNSIGNED NOT NULL,
   result        ENUM('1','2','3','4','5','6','7','8','9','10','participation') NOT NULL,
   description   VARCHAR(500) NOT NULL DEFAULT '',
-  status        ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  status        ENUM('pending','approved','rejected','withdrawn') NOT NULL DEFAULT 'pending',
   reviewer_id   INT UNSIGNED NULL,                 -- NULL until reviewed
   review_note   VARCHAR(500) NULL,
   base_points   SMALLINT UNSIGNED NULL,            -- filled on approval

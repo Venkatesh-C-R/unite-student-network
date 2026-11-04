@@ -28,6 +28,8 @@ export async function setupDatabase({ reset = false } = {}) {
     // One union per student. Fails if a student is still in two unions; remove them from one first.
     const [idx] = await conn.query(`SHOW INDEX FROM group_member WHERE Key_name = 'uq_one_union'`)
     if (!idx.length) await conn.query('ALTER TABLE group_member ADD UNIQUE KEY uq_one_union (user_id)')
+    // Admins can withdraw claims
+    await conn.query(`ALTER TABLE achievement MODIFY status ENUM('pending','approved','rejected','withdrawn') NOT NULL DEFAULT 'pending'`)
     // Sign-in is by emailed code only: drop passwords and the old reset codes
     const [pw] = await conn.query(`SHOW COLUMNS FROM user_account LIKE 'password_hash'`)
     if (pw.length) await conn.query('ALTER TABLE user_account DROP COLUMN password_hash')
