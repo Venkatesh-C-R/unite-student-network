@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, CheckCircle2, KeyRound, Lock, Mail, User, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, KeyRound, Mail, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { lockScroll } from '../hooks/useLenis'
@@ -26,10 +26,11 @@ function Field({ icon: Icon, label, id, ...props }) {
   )
 }
 
-// Views: signin | signup-email | signup-details | reset-email | reset-code | done
+// No passwords: everyone signs in with a 6-digit code sent to their college email.
+// Views: signin | signin-code | signup-email | signup-details | done
 export default function SignInModal({ open, onClose, onSignedIn }) {
   const [view, setView] = useState('signin')
-  const [form, setForm] = useState({ email: '', password: '', otp: '', name: '', programmeId: '', year: '1' })
+  const [form, setForm] = useState({ email: '', otp: '', name: '', programmeId: '', year: '1' })
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
@@ -93,7 +94,15 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
   const submit = {
     signin: () =>
       run(async () => {
-        const { user } = await api('/auth/login', { method: 'POST', body: { email: form.email, password: form.password } })
+        if (!/@psgtech\.ac\.in$/i.test(form.email.trim())) throw new Error('Use your PSG college email, like 26mx354@psgtech.ac.in.')
+        const r = await api('/auth/otp', { method: 'POST', body: { email: form.email, purpose: 'login' } })
+        setForm((f) => ({ ...f, otp: '' }))
+        go('signin-code')
+        setInfo(r.message)
+      }),
+    'signin-code': () =>
+      run(async () => {
+        const { user } = await api('/auth/login', { method: 'POST', body: { email: form.email, otp: form.otp } })
         setDoneUser(user)
         onSignedIn(user)
         go('done')
@@ -102,6 +111,7 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
       run(async () => {
         checkEmail()
         const r = await api('/auth/otp', { method: 'POST', body: { email: form.email, purpose: 'signup' } })
+        setForm((f) => ({ ...f, otp: '' }))
         go('signup-details')
         setInfo(r.message)
       }),
@@ -115,26 +125,13 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
         onSignedIn(user)
         go('done')
       }),
-    'reset-email': () =>
-      run(async () => {
-        const r = await api('/auth/otp', { method: 'POST', body: { email: form.email, purpose: 'reset' } })
-        go('reset-code')
-        setInfo(r.message)
-      }),
-    'reset-code': () =>
-      run(async () => {
-        const r = await api('/auth/reset', { method: 'POST', body: { email: form.email, otp: form.otp, password: form.password } })
-        go('signin')
-        setInfo(r.message)
-      }),
   }
 
   const titles = {
-    signin: ['Sign in to UNITE', 'Welcome back. Use your college email and password.'],
+    signin: ['Sign in to UNITE', 'Enter your college email. We’ll send you a 6-digit code.'],
+    'signin-code': ['Check your email', `Enter the code sent to ${form.email}.`],
     'signup-email': ['Create your account', 'Enter your PSG college email. We’ll send a 6-digit code.'],
     'signup-details': ['Almost there', `Enter the code sent to ${form.email} and a few details.`],
-    'reset-email': ['Reset password', 'We’ll email you a code to set a new password.'],
-    'reset-code': ['Set a new password', `Enter the code sent to ${form.email}.`],
     done: ['You’re in!', ''],
   }
 
@@ -196,7 +193,7 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
                       submit[view]()
                     }}
                   >
-                    {['signin', 'signup-email', 'reset-email'].includes(view) && (
+                    {['signin', 'signup-email'].includes(view) && (
                       <Field
                         ref={firstInput}
                         icon={Mail}
@@ -209,7 +206,7 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
                         onChange={set('email')}
                       />
                     )}
-                    {['signup-details', 'reset-code'].includes(view) && (
+                    {['signin-code', 'signup-details'].includes(view) && (
                       <Field
                         icon={KeyRound}
                         id="otp"
@@ -258,19 +255,12 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
                         </div>
                       </>
                     )}
-                    {['signin', 'signup-details', 'reset-code'].includes(view) && (
-                      <Field
-                        icon={Lock}
-                        id="password"
-                        label={view === 'signin' ? 'Password' : 'New password (8+ characters)'}
-                        type="password"
-                        autoComplete={view === 'signin' ? 'current-password' : 'new-password'}
-                        value={form.password}
-                        onChange={set('password')}
-                      />
+                    {info && !error && <p className="mt-3 text-xs text-muted">{info}</p>}
+                    {view === 'signin-code' && (
+                      <button type="button" disabled={busy} onClick={() => submit.signin()} className="mt-3 text-sm font-semibold text-violet-500 hover:underline">
+                        Send a new code
+                      </button>
                     )}
-
-                    {info && !error && <p className="mt-3 text-xs text-cyan-500">{info}</p>}
                     {error && (
                       <p role="alert" className="mt-3 flex gap-2 text-sm text-rose-400">
                         <AlertTriangle size={16} className="mt-0.5 shrink-0" /> {error}
@@ -280,14 +270,12 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
                     <button disabled={busy} className={primary}>
                       {busy
                         ? 'Please wait…'
-                        : { signin: 'Sign in', 'signup-email': 'Send code', 'signup-details': 'Create account', 'reset-email': 'Send code', 'reset-code': 'Update password' }[view]}
+                        : { signin: 'Send code', 'signin-code': 'Sign in', 'signup-email': 'Send code', 'signup-details': 'Create account' }[view]}
                     </button>
 
                     {view === 'signin' && (
                       <div className="mt-4 flex justify-between text-sm">
-                        <button type="button" onClick={() => go('reset-email')} className="text-muted hover:text-ink">
-                          Forgot password?
-                        </button>
+                        <span className="text-muted">New to UNITE?</span>
                         <button type="button" onClick={() => go('signup-email')} className="font-semibold text-violet-600 dark:text-violet-400">
                           Create account
                         </button>

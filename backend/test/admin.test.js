@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
-import { P, PASSWORD, agent, signedIn, startApp, stopApp } from './helpers.js'
+import { P, agent, loginByCode, signedIn, startApp, stopApp } from './helpers.js'
 
 let app
 before(async () => {
@@ -40,12 +40,12 @@ test('suspending signs the user out and blocks login; restoring allows it again'
 
   assert.equal((await admin.agent.post(`/api/admin/users/${s.id}/active`).send({ active: false })).status, 200)
   assert.equal((await s.agent.get('/api/groups/mine')).status, 401)
-  assert.equal((await s.agent.post('/api/auth/login').send({ email: s.email, password: PASSWORD })).status, 401)
+  assert.notEqual((await loginByCode(s.agent, s.email)).status, 200)
   const list = (await admin.agent.get('/api/admin/users?status=suspended')).body.users
   assert.ok(list.some((u) => u.id === s.id && !u.isActive))
 
   await admin.agent.post(`/api/admin/users/${s.id}/active`).send({ active: true })
-  assert.equal((await s.agent.post('/api/auth/login').send({ email: s.email, password: PASSWORD })).status, 200)
+  assert.equal((await loginByCode(s.agent, s.email)).status, 200)
   assert.equal((await admin.agent.post(`/api/admin/users/${admin.id}/active`).send({ active: false })).status, 400)
 })
 
@@ -67,7 +67,7 @@ test('role changes keep groups valid', async () => {
 test('activity log records sign-ins, claims and admin actions; only admins can read it', async () => {
   const admin = await signedIn(app, { role: 'admin' })
   const student = await signedIn(app, { programmeId: P.BE_EEE, name: 'Logged Lakshmi' })
-  await agent(app).post('/api/auth/login').send({ email: student.email, password: 'wrong-password' })
+  await agent(app).post('/api/auth/login').send({ email: student.email, otp: '000000' })
   await admin.agent.post(`/api/admin/users/${student.id}/active`).send({ active: false })
 
   const res = await admin.agent.get('/api/admin/activity').query({ q: 'Logged Lakshmi' })

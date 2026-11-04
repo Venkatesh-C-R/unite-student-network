@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
@@ -6,12 +5,10 @@ import { config } from '../config.js'
 import { one, pool, withTransaction } from '../db.js'
 import { badRequest, conflict, unauthorized } from '../lib/errors.js'
 import { consumeOtp, issueOtp } from '../lib/otp.js'
-import { email, id, otpCode, password, text } from '../lib/validate.js'
+import { email, id, otpCode, text } from '../lib/validate.js'
 import { logActivity } from '../lib/activity.js'
 
 export const authRouter = Router()
-
-const DUMMY_HASH = bcrypt.hashSync('unite-timing-guard', config.bcryptRounds)
 
 const limiter = (limit) =>
   rateLimit({ windowMs: 15 * 60 * 1000, limit, standardHeaders: 'draft-8', legacyHeaders: false, skip: () => config.env === 'test' })
@@ -37,23 +34,23 @@ export async function publicMe(userId) {
   )
 }
 
-// Step 1: send a 6-digit code to a college email
+// Step 1: email a 6-digit code. UNITE has no passwords: every sign-up and sign-in is by code.
 authRouter.post('/otp', limiter(10), async (req, res) => {
-  const body = z.object({ email, purpose: z.enum(['signup', 'reset']) }).parse(req.body)
-  const existing = await one('SELECT id FROM user_account WHERE email = ?', [body.email])
+  const body = z.object({ email, purpose: z.enum(['signup', 'login']) }).parse(req.body)
+  const existing = await one('SELECT id, is_active FROM user_account WHERE email = ?', [body.email])
 
   if (body.purpose === 'signup') {
     studentRoll(body.email)
     if (existing) throw conflict('An account with this email already exists. Sign in instead.', 'email_taken')
     await issueOtp(body.email, 'signup')
-  } else if (existing) {
-    await issueOtp(body.email, 'reset')
+  } else if (existing?.is_active) {
+    await issueOtp(body.email, 'login')
   }
-  // Same reply for reset whether or not the account exists
-  res.json({ ok: true, message: `If the address can receive mail, a code is on its way. It expires in ${config.otp.ttlMinutes} minutes.` })
+  // Same reply for sign-in whether or not the account exists
+  res.json({ ok: true, message: `If the address has a UNITE account, a code is on its way. It expires in ${config.otp.ttlMinutes} minutes.` })
 })
 
-// Step 2: verify the code and create the student account
+// Step 2 (new students): verify the code and create the account
 authRouter.post('/register', limiter(20), async (req, res) => {
   const body = z
     .object({
@@ -62,7 +59,6 @@ authRouter.post('/register', limiter(20), async (req, res) => {
       name: text(100, 2),
       programmeId: id,
       year: z.coerce.number().int().min(1).max(5),
-      password,
     })
     .parse(req.body)
   const rollNo = studentRoll(body.email)
@@ -70,14 +66,13 @@ authRouter.post('/register', limiter(20), async (req, res) => {
   const programme = await one('SELECT id FROM programme WHERE id = ? AND is_active', [body.programmeId])
   if (!programme) throw badRequest('Choose a valid programme.', 'bad_programme')
 
-  const hash = await bcrypt.hash(body.password, config.bcryptRounds)
   const userId = await withTransaction(async (conn) => {
     await consumeOtp(conn, body.email, 'signup', body.otp)
     try {
       const [r] = await conn.query(
-        `INSERT INTO user_account (email, roll_no, name, role, programme_id, year, password_hash)
-         VALUES (?, ?, ?, 'student', ?, ?, ?)`,
-        [body.email, rollNo, body.name, body.programmeId, body.year, hash],
+        `INSERT INTO user_account (email, roll_no, name, role, programme_id, year)
+         VALUES (?, ?, ?, 'student', ?, ?)`,
+        [body.email, rollNo, body.name, body.programmeId, body.year],
       )
       return r.insertId
     } catch (e) {
@@ -91,29 +86,21 @@ authRouter.post('/register', limiter(20), async (req, res) => {
   res.status(201).json({ user: await publicMe(userId) })
 })
 
-authRouter.post('/login', limiter(10), async (req, res) => {
-  const body = z.object({ email, password: z.string().min(1).max(72) }).parse(req.body)
-  const user = await one('SELECT id, password_hash, is_active FROM user_account WHERE email = ?', [body.email])
-  // Compare against a dummy hash when the user is missing so timing does not reveal accounts
-  const ok = await bcrypt.compare(body.password, user?.password_hash || DUMMY_HASH)
-  if (!user || !ok || !user.is_active) {
+// Step 2 (everyone else): sign in with the emailed code
+authRouter.post('/login', limiter(20), async (req, res) => {
+  const body = z.object({ email, otp: otpCode }).parse(req.body)
+  const user = await one('SELECT id, is_active FROM user_account WHERE email = ?', [body.email])
+  try {
+    // With no account (or a suspended one) no code was sent, so this fails as "expired"
+    await withTransaction((conn) => consumeOtp(conn, body.email, 'login', body.otp))
+    if (!user?.is_active) throw unauthorized('This account cannot sign in.')
+  } catch (e) {
     await logActivity(req, 'login_failed', { userId: user?.id ?? null, details: body.email })
-    throw unauthorized('Email or password is not correct.')
+    throw e
   }
   await startSession(req, user.id)
   await logActivity(req, 'login', { userId: user.id })
   res.json({ user: await publicMe(user.id) })
-})
-
-authRouter.post('/reset', limiter(10), async (req, res) => {
-  const body = z.object({ email, otp: otpCode, password }).parse(req.body)
-  const hash = await bcrypt.hash(body.password, config.bcryptRounds)
-  await withTransaction(async (conn) => {
-    await consumeOtp(conn, body.email, 'reset', body.otp)
-    await conn.query('UPDATE user_account SET password_hash = ? WHERE email = ?', [hash, body.email])
-  })
-  await logActivity(req, 'password_reset', { userId: (await one('SELECT id FROM user_account WHERE email = ?', [body.email]))?.id })
-  res.json({ ok: true, message: 'Password updated. You can sign in now.' })
 })
 
 authRouter.post('/logout', async (req, res) => {

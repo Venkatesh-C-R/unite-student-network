@@ -37,10 +37,10 @@ export async function sendMail(msg) {
 }
 
 export function otpEmail(to, code, purpose) {
-  const action = purpose === 'signup' ? 'finish creating your UNITE account' : 'reset your UNITE password'
+  const action = purpose === 'signup' ? 'finish creating your UNITE account' : 'sign in to UNITE'
   const text = `Your UNITE code is ${code}\n\nUse it to ${action}. It expires in ${config.otp.ttlMinutes} minutes.\nIf you did not ask for this, ignore this email.`
   const html = `<div style="font-family:Arial,sans-serif;max-width:420px;margin:auto;padding:24px">
-  <h2 style="margin:0 0 8px;color:#4F46E5;letter-spacing:4px">UNITE</h2>
+  <h2 style="margin:0 0 8px;color:#BB2525;letter-spacing:4px">UNITE</h2>
   <p>Use this code to ${action}:</p>
   <p style="font-size:32px;font-weight:bold;letter-spacing:8px;margin:16px 0">${code}</p>
   <p style="color:#555">It expires in ${config.otp.ttlMinutes} minutes. If you did not ask for this, ignore this email.</p>

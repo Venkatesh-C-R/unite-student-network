@@ -366,7 +366,6 @@ const ACTION_LABEL = {
   login: 'Signed in',
   login_failed: 'Failed sign-in',
   logout: 'Signed out',
-  password_reset: 'Reset password',
   role_changed: 'Changed a role',
   user_suspended: 'Suspended a user',
   user_restored: 'Restored a user',

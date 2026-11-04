@@ -34,5 +34,4 @@ export const config = {
     maxBytes: 5 * 1024 * 1024,
     maxFiles: 5,
   },
-  bcryptRounds: Number(process.env.BCRYPT_ROUNDS || 12),
 }

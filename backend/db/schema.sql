@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS user_account (
   programme_id   SMALLINT UNSIGNED NULL,        -- required for students (enforced in app)
   year           TINYINT UNSIGNED NULL,
   about          VARCHAR(600) NOT NULL DEFAULT '',
-  password_hash  CHAR(60) NOT NULL,
   is_active      BOOLEAN NOT NULL DEFAULT TRUE,
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_user_programme FOREIGN KEY (programme_id) REFERENCES programme(id),
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS user_account (
 CREATE TABLE IF NOT EXISTS email_otp (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email        VARCHAR(190) NOT NULL,
-  purpose      ENUM('signup','reset') NOT NULL,
+  purpose      ENUM('signup','login') NOT NULL,
   code_hash    CHAR(64) NOT NULL,               -- HMAC-SHA256, never the plain code
   attempts     TINYINT UNSIGNED NOT NULL DEFAULT 0,
   expires_at   DATETIME NOT NULL,
