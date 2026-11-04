@@ -90,9 +90,11 @@ authRouter.post('/register', limiter(20), async (req, res) => {
 authRouter.post('/login', limiter(20), async (req, res) => {
   const body = z.object({ email, otp: otpCode }).parse(req.body)
   const user = await one('SELECT id, is_active FROM user_account WHERE email = ?', [body.email])
+  // Demo accounts may use the fixed demo code (development only; see DEMO_LOGIN_CODE)
+  const demo = config.demoLoginCode && config.demoEmail.test(body.email) && body.otp === config.demoLoginCode
   try {
     // With no account (or a suspended one) no code was sent, so this fails as "expired"
-    await withTransaction((conn) => consumeOtp(conn, body.email, 'login', body.otp))
+    if (!demo) await withTransaction((conn) => consumeOtp(conn, body.email, 'login', body.otp))
     if (!user?.is_active) throw unauthorized('This account cannot sign in.')
   } catch (e) {
     await logActivity(req, 'login_failed', { userId: user?.id ?? null, details: body.email })

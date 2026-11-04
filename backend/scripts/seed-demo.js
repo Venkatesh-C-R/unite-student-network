@@ -3,8 +3,8 @@
 // Usage: npm run seed:demo
 //
 // Demo sign-in (development only): 26dm001@psgtech.ac.in … 26dm012@psgtech.ac.in
-// demo.faculty@psgtech.ac.in and demo.admin@psgtech.ac.in. Sign in by emailed code; in development
-// the code is printed in the backend terminal.
+// demo.faculty@psgtech.ac.in and demo.admin@psgtech.ac.in. Sign in with the code from DEMO_LOGIN_CODE in .env,
+// or the emailed code (printed in the backend terminal in development).
 import { randomBytes } from 'node:crypto'
 import { readdir, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -194,5 +194,5 @@ await withTransaction(async (conn) => {
   ])
 })
 
-console.log('Demo data ready. Sign in as 26dm001@psgtech.ac.in (owner of Team Nova); the code prints in the backend terminal.')
+console.log('Demo data ready. Sign in as 26dm001@psgtech.ac.in (owner of Team Nova) with the DEMO_LOGIN_CODE from .env.')
 await pool.end()

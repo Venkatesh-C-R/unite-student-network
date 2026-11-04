@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
 import request from 'supertest'
+import { config } from '../src/config.js'
 import { pool } from '../src/db.js'
 import { agent, lastCode, loginByCode, P, startApp, stopApp } from './helpers.js'
 
@@ -68,4 +69,21 @@ test('sign-in codes are only sent to existing accounts, with the same reply eith
   assert.equal(unknown.body.message, known.body.message)
   assert.equal((await a.post('/api/auth/login').send({ email: '26mx999@psgtech.ac.in', otp: '123456' })).status, 400)
   assert.equal((await a.post('/api/auth/login').send({ email: '26mx354@psgtech.ac.in', password: 'anything' })).status, 400)
+})
+
+test('the demo code signs in demo accounts only, and only when configured', async () => {
+  const [r] = await pool.query(`INSERT INTO user_account (email, roll_no, name, role, programme_id, year) VALUES ('26dm001@psgtech.ac.in', '26DM001', 'Demo One', 'student', ?, 1)`, [P.MCA])
+  const real = '26mx354@psgtech.ac.in'
+  config.demoLoginCode = null
+  assert.equal((await agent(app).post('/api/auth/login').send({ email: '26dm001@psgtech.ac.in', otp: '123456' })).status, 400)
+
+  config.demoLoginCode = '123456'
+  try {
+    const ok = await agent(app).post('/api/auth/login').send({ email: '26dm001@psgtech.ac.in', otp: '123456' })
+    assert.equal(ok.status, 200)
+    assert.equal(ok.body.user.id, r.insertId)
+    assert.equal((await agent(app).post('/api/auth/login').send({ email: real, otp: '123456' })).status, 400)
+  } finally {
+    config.demoLoginCode = null
+  }
 })
