@@ -16,9 +16,15 @@ import Team from '../components/Team'
 import { useAuth } from '../context'
 import { useLenis } from '../hooks/useLenis'
 
-// Show the full intro once per browser session, and never with reduced motion.
+// Show the full intro once per browser session (or whenever ?intro is set), never with reduced motion.
 function shouldShowLoader() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
+  // ?intro (used by start-unite.command) plays it every time
+  const params = new URLSearchParams(window.location.search)
+  if (params.has('intro')) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+    return true
+  }
   try {
     if (sessionStorage.getItem('unite-intro-seen')) return false
     sessionStorage.setItem('unite-intro-seen', '1')
