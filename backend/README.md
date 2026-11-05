@@ -1,19 +1,20 @@
 # UNITE backend
 
-Node.js + Express 5 + MySQL API for UNITE. Sessions are stored in MySQL (cookie `unite.sid`), passwords are hashed with bcrypt, and every SQL query uses placeholders.
+Node.js + Express 5 + MySQL API for UNITE. Sessions are stored in MySQL (cookie `unite.sid`), there are no passwords (everyone signs in with a 6-digit code sent to their email), and every SQL query uses placeholders.
 
 ## Run it
 
 ```bash
 brew services start mysql      # MySQL must be running
+cp .env.example .env           # then fill it in (see Settings below)
 npm install
-npm run db:setup               # creates tables + loads the 42 programmes (safe to re-run)
+npm run db:setup               # creates tables + loads the 44 programmes (safe to re-run)
 npm run dev                    # http://localhost:4000, restarts on file changes
-npm test                       # 27 integration tests against the unite_test database
+npm test                       # 34 integration tests against the unite_test database (.env.test)
 npm run seed:demo              # optional: demo students, groups, a poll and points (dev database only)
 ```
 
-Demo sign-in after `seed:demo` (development only): `26dm001@psgtech.ac.in` (owner of Team Nova) through `26dm012@psgtech.ac.in`, `demo.faculty@psgtech.ac.in` and `demo.admin@psgtech.ac.in`; the shared demo password is in `scripts/seed-demo.js`. The demo includes three verified wins, a pending join request for Team Nova, a poll, and two pending claims (one from a joint team of two groups) for the faculty account to review, and three open reports for the admin console. Re-running the command resets all demo data, including its `uploads/demo-*.pdf` certificates.
+Demo sign-in after `seed:demo` (development only): `26dm001@psgtech.ac.in` (owner of Team Nova) through `26dm012@psgtech.ac.in`, `demo.faculty@psgtech.ac.in` and `demo.admin@psgtech.ac.in`; they sign in with the fixed code set in `DEMO_LOGIN_CODE` (ignored in production). The demo includes three verified wins, a pending join request for Team Nova, a poll, and two pending claims (one from a joint team of two groups) for the faculty account to review, and three open reports for the admin console. Re-running the command resets all demo data, including its `uploads/demo-*.pdf` certificates.
 
 The frontend dev server (`frontend/`, port 5173) proxies `/api` to this server.
 
@@ -25,7 +26,7 @@ npm run staff -- --email someone@psgtech.ac.in --name "Dr. V. Umarani" --role fa
 
 ## Settings (`.env`)
 
-`.env` and `.env.test` hold the database password and session secret. They are git-ignored; never commit them.
+Copy `.env.example` to `.env` (and to `.env.test` with `DB_NAME=unite_test` for the tests). `.env` and `.env.test` hold the database password and session secret. They are git-ignored; never commit them.
 
 | Variable | Meaning |
 |---|---|
@@ -44,7 +45,7 @@ npm run staff -- --email someone@psgtech.ac.in --name "Dr. V. Umarani" --role fa
 | Joining | Request → leader or second in command approves; a student may be in only one union (unique key), and joining cancels their other requests and invites. The leader can also invite a student, who accepts or declines | `src/routes/groups.js` |
 | Leadership | Groups are called unions in the app. The creator is leader (`owner`); the leader can name one second in command (`deputy`), who can also approve join requests | `src/routes/groups.js` |
 | Leader leaves | Second in command becomes leader, else the longest-standing member; empty group is deleted | `src/routes/groups.js` |
-| Sign-up | Only `rollno@psgtech.ac.in`; OTP (6 digits, 10 min, 5 tries) then password | `src/routes/auth.js`, `src/config.js` |
+| Sign-up | Only `rollno@psgtech.ac.in`; emailed code (6 digits, 10 min, 5 tries) for both sign-up and sign-in; no passwords | `src/routes/auth.js`, `src/config.js` |
 | Points for multi-group teams | **Every** group in the event team gets the full points | `src/routes/achievements.js` |
 | Scoring | 100/70/50/45/…/15, participation 10; ×1.0 college, ×1.5 state, ×2.0 national | `src/lib/scoring.js` |
 | Below 10th | Submit as “participation” | `src/routes/achievements.js` |
@@ -58,7 +59,7 @@ npm run staff -- --email someone@psgtech.ac.in --name "Dr. V. Umarani" --role fa
 
 All paths start with `/api`. Send `X-UNITE: 1` on every non-GET request.
 
-- **Auth:** `POST /auth/otp`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/reset`, `GET /auth/me`, `GET /auth/programmes`
+- **Auth:** `POST /auth/otp`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/programmes`
 - **Profile & people:** `GET/PUT /me/profile`, `GET /students?q=&programmeId=&interest=`, `GET /students/suggested`, `GET /students/:id`
 - **Friends:** `GET /friends`, `GET /friends/requests`, `POST /friends/requests`, `POST /friends/requests/:id/accept|reject|cancel`, `DELETE /friends/:userId`
 - **Safety:** `GET/POST /blocks`, `DELETE /blocks/:userId`, `POST /reports`

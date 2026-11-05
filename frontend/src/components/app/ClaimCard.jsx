@@ -1,4 +1,4 @@
-import { BadgeCheck, Clock, FileText, XCircle } from 'lucide-react'
+import { BadgeCheck, Clock, FileText, Undo2, XCircle } from 'lucide-react'
 import { HOST_CATEGORIES } from '../../data'
 import { CATEGORY_ICON, claimRef, resultLabel } from '../../lib/claims'
 import { formatPoints, timeAgo } from '../../lib/format'
@@ -7,6 +7,7 @@ const STATUS = {
   pending: { label: 'Pending review', icon: Clock, cls: 'bg-amber-400/15 text-amber-500' },
   approved: { label: 'Verified', icon: BadgeCheck, cls: 'bg-emerald-500/15 text-emerald-500' },
   rejected: { label: 'Not approved', icon: XCircle, cls: 'bg-rose-500/15 text-rose-400' },
+  withdrawn: { label: 'Withdrawn', icon: Undo2, cls: 'bg-[var(--bg-2)] text-muted' },
 }
 
 export function StatusBadge({ status }) {
@@ -98,7 +99,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
           </span>
         )}
       </div>
-      {claim.status === 'rejected' && claim.reviewNote && (
+      {['rejected', 'withdrawn'].includes(claim.status) && claim.reviewNote && (
         <p className="mt-3 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           <b>{claim.reviewerName}:</b> {claim.reviewNote}
         </p>

@@ -104,7 +104,7 @@ export const DEMO_GROUPS = [
   .sort((a, b) => b.total - a.total)
 
 export const STEPS = [
-  { title: 'Sign up with your college ID', body: 'Register with your PSG email (rollno@psgtech.ac.in) and verify with a one-time password.' },
+  { title: 'Sign up with your college ID', body: 'Register with your PSG email (rollno@psgtech.ac.in) and verify with a one-time code. There is no password: every sign-in is by emailed code.' },
   { title: 'Build your profile', body: 'Keep it simple — About, Interests and Links to GitHub, LinkedIn, LeetCode or anything else.' },
   { title: 'Discover and connect', body: 'Find students across programmes who share your interests and send friend requests.' },
   { title: 'Form or join a group', body: 'Up to six members, one from each programme. The server checks every join.' },

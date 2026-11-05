@@ -3,11 +3,11 @@
 // Usage: npm run seed:demo
 //
 // Demo sign-in (development only): 26dm001@psgtech.ac.in … 26dm012@psgtech.ac.in
-// demo.faculty@psgtech.ac.in and demo.admin@psgtech.ac.in, all with the password  unite-demo-123
+// demo.faculty@psgtech.ac.in and demo.admin@psgtech.ac.in. Sign in with the code from DEMO_LOGIN_CODE in .env,
+// or the emailed code (printed in the backend terminal in development).
 import { randomBytes } from 'node:crypto'
 import { readdir, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import bcrypt from 'bcrypt'
 import { config } from '../src/config.js'
 import { pool, withTransaction } from '../src/db.js'
 import { scoreFor } from '../src/lib/scoring.js'
@@ -43,7 +43,6 @@ if (config.isProd || config.db.database.endsWith('_test')) {
   process.exit(1)
 }
 
-const PASSWORD = 'unite-demo-123'
 // [name, programme id] — programme ids from db/seed-programmes.sql
 const STUDENTS = [
   ['Aarav Kumar', 4], //  1 BE CSE
@@ -60,8 +59,6 @@ const STUDENTS = [
   ['Divya Suresh', 30], // 12 ME VLSI
 ]
 
-const hash = await bcrypt.hash(PASSWORD, 10)
-
 await withTransaction(async (conn) => {
   // Remove earlier demo data (groups are removed through their demo owners below)
   const [old] = await conn.query(`SELECT id FROM user_account WHERE email LIKE '26dm%@psgtech.ac.in' OR email IN ('demo.faculty@psgtech.ac.in', 'demo.admin@psgtech.ac.in')`)
@@ -76,17 +73,16 @@ await withTransaction(async (conn) => {
   for (const [i, [name, programmeId]] of STUDENTS.entries()) {
     const roll = `26dm${String(i + 1).padStart(3, '0')}`
     const [r] = await conn.query(
-      `INSERT INTO user_account (email, roll_no, name, role, programme_id, year, about, password_hash)
-       VALUES (?, ?, ?, 'student', ?, ?, ?, ?)`,
-      [`${roll}@psgtech.ac.in`, roll.toUpperCase(), name, programmeId, 1 + (i % 4), 'Demo account for trying UNITE.', hash],
+      `INSERT INTO user_account (email, roll_no, name, role, programme_id, year, about)
+       VALUES (?, ?, ?, 'student', ?, ?, ?)`,
+      [`${roll}@psgtech.ac.in`, roll.toUpperCase(), name, programmeId, 1 + (i % 4), 'Demo account for trying UNITE.'],
     )
     ids.push(r.insertId)
   }
   const [fac] = await conn.query(
-    `INSERT INTO user_account (email, name, role, password_hash) VALUES ('demo.faculty@psgtech.ac.in', 'Demo Faculty', 'faculty', ?)`,
-    [hash],
+    `INSERT INTO user_account (email, name, role) VALUES ('demo.faculty@psgtech.ac.in', 'Demo Faculty', 'faculty')`,
   )
-  await conn.query(`INSERT INTO user_account (email, name, role, password_hash) VALUES ('demo.admin@psgtech.ac.in', 'Demo Admin', 'admin', ?)`, [hash])
+  await conn.query(`INSERT INTO user_account (email, name, role) VALUES ('demo.admin@psgtech.ac.in', 'Demo Admin', 'admin')`)
   const S = (n) => ids[n - 1]
 
   // Open reports for the admin console (Hari is reported twice)
@@ -198,5 +194,5 @@ await withTransaction(async (conn) => {
   ])
 })
 
-console.log(`Demo data ready. Sign in as 26dm001@psgtech.ac.in (owner of Team Nova) with password "${PASSWORD}".`)
+console.log('Demo data ready. Sign in as 26dm001@psgtech.ac.in (owner of Team Nova) with the DEMO_LOGIN_CODE from .env.')
 await pool.end()

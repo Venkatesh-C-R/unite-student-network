@@ -5,6 +5,7 @@ dist/
 # Secrets: database password, session secret, mail API keys
 .env
 .env.*
+!.env.example
 
 # Uploaded evidence files (backend/.gitignore keeps uploads/.gitkeep)
 backend/uploads/*

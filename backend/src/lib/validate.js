@@ -10,11 +10,6 @@ export const email = z
   .max(190)
   .pipe(z.email({ message: 'Enter a valid email address.' }))
 
-export const password = z
-  .string()
-  .min(8, 'Password must be at least 8 characters.')
-  .max(72, 'Password must be at most 72 characters.')
-
 export const otpCode = z.string().trim().regex(/^\d{6}$/, 'The code has 6 digits.')
 
 export const httpUrl = z

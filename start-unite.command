@@ -31,7 +31,7 @@ done
 open "$OPEN_URL"
 echo
 echo "UNITE is running at $URL"
-echo "Demo password for every account: unite-demo-123"
+echo "Sign in with a demo email, then use the demo code 123456 (set by DEMO_LOGIN_CODE in backend/.env)"
 echo "  Student: 26dm001@psgtech.ac.in"
 echo "  Faculty: demo.faculty@psgtech.ac.in"
 echo "  Admin:   demo.admin@psgtech.ac.in"

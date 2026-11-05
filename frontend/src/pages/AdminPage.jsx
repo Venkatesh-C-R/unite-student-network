@@ -366,7 +366,6 @@ const ACTION_LABEL = {
   login: 'Signed in',
   login_failed: 'Failed sign-in',
   logout: 'Signed out',
-  password_reset: 'Reset password',
   role_changed: 'Changed a role',
   user_suspended: 'Suspended a user',
   user_restored: 'Restored a user',
@@ -385,6 +384,9 @@ const ACTION_LABEL = {
   invite_sent: 'Sent an invite',
   invite_accepted: 'Accepted an invite',
   invite_declined: 'Declined an invite',
+  claim_reopened: 'Reopened a claim',
+  claim_withdrawn: 'Withdrew a claim',
+  member_restored: 'Restored a member',
 }
 
 function targetLink(a) {
@@ -405,6 +407,21 @@ function ActivityTab() {
   const [actions, setActions] = useState([])
   const [hasMore, setHasMore] = useState(false)
   const [before, setBefore] = useState(null)
+  const [restoring, setRestoring] = useState(null)
+  const [reload, setReload] = useState(0)
+
+  async function restore(entry) {
+    setRestoring(entry.id)
+    try {
+      await api(`/admin/activity/${entry.id}/restore-member`, { method: 'POST' })
+      toast('The student is back in the union.')
+      setBefore(null)
+      setReload((n) => n + 1)
+    } catch (e) {
+      toast(e.message, 'error')
+    }
+    setRestoring(null)
+  }
 
   useEffect(() => {
     let current = true
@@ -427,7 +444,7 @@ function ActivityTab() {
       current = false
       clearTimeout(t)
     }
-  }, [q, action, date, before, toast])
+  }, [q, action, date, before, reload, toast])
 
   // Filters start again from the newest entry
   const filterKey = `${q}|${action}|${date}`
@@ -488,6 +505,16 @@ function ActivityTab() {
                     )}
                     {a.details && <span className="text-muted"> — {a.details}</span>}
                   </span>
+                  {a.action === 'member_removed' && (
+                    <button
+                      disabled={restoring === a.id}
+                      onClick={() => restore(a)}
+                      className={`${btn.ghost} shrink-0 px-3 py-1.5 text-xs`}
+                      title={`Put ${a.details} back in the union`}
+                    >
+                      <RotateCcw size={13} /> Restore
+                    </button>
+                  )}
                   <span className="shrink-0 font-mono text-xs text-muted">{a.ip}</span>
                 </li>
               )
