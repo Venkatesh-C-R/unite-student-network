@@ -9,6 +9,7 @@ import SignInModal from './components/SignInModal'
 import AdminPage from './pages/AdminPage'
 import ClaimsPage from './pages/ClaimsPage'
 import DiscoverPage from './pages/DiscoverPage'
+import FlyersPage from './pages/FlyersPage'
 import GroupDetail from './pages/GroupDetail'
 import GroupsPage from './pages/GroupsPage'
 import Landing from './pages/Landing'
@@ -68,6 +69,8 @@ export default function App() {
           <Route element={<AppShell theme={theme} onToggleTheme={toggleTheme} />}>
             <Route path="/groups" element={<GroupsPage />} />
             <Route path="/groups/:id" element={<GroupDetail />} />
+            <Route path="/flyers" element={<FlyersPage />} />
+            <Route path="/flyers/:id" element={<FlyersPage />} />
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/students/:id" element={<StudentPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />

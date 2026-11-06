@@ -290,3 +290,54 @@ CREATE TABLE IF NOT EXISTS activity_log (
   INDEX ix_activity_action (action, created_at),
   CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+-- Event flyers: anyone signed in posts a photo of a flyer; others like it, comment on it
+-- and share it with their union (whose members are notified).
+CREATE TABLE IF NOT EXISTS flyer (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  author_id   INT UNSIGNED NOT NULL,
+  title       VARCHAR(150) NOT NULL,
+  details     VARCHAR(1000) NOT NULL DEFAULT '',
+  event_date  DATE NULL,
+  link        VARCHAR(500) NULL,
+  image_name  VARCHAR(80) NOT NULL,
+  image_type  VARCHAR(40) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX ix_flyer_author (author_id),
+  CONSTRAINT fk_flyer_author FOREIGN KEY (author_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- One like per person per flyer
+CREATE TABLE IF NOT EXISTS flyer_like (
+  flyer_id    INT UNSIGNED NOT NULL,
+  user_id     INT UNSIGNED NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (flyer_id, user_id),
+  INDEX ix_like_user (user_id),
+  CONSTRAINT fk_like_flyer FOREIGN KEY (flyer_id) REFERENCES flyer(id) ON DELETE CASCADE,
+  CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS flyer_comment (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  flyer_id    INT UNSIGNED NOT NULL,
+  user_id     INT UNSIGNED NOT NULL,
+  body        VARCHAR(500) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX ix_comment_flyer (flyer_id, id),
+  CONSTRAINT fk_comment_flyer FOREIGN KEY (flyer_id) REFERENCES flyer(id) ON DELETE CASCADE,
+  CONSTRAINT fk_comment_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- A flyer shared with a union, once per union
+CREATE TABLE IF NOT EXISTS flyer_share (
+  flyer_id    INT UNSIGNED NOT NULL,
+  group_id    INT UNSIGNED NOT NULL,
+  shared_by   INT UNSIGNED NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (flyer_id, group_id),
+  INDEX ix_share_group (group_id, created_at),
+  CONSTRAINT fk_share_flyer FOREIGN KEY (flyer_id) REFERENCES flyer(id) ON DELETE CASCADE,
+  CONSTRAINT fk_share_group FOREIGN KEY (group_id) REFERENCES collab_group(id) ON DELETE CASCADE,
+  CONSTRAINT fk_share_user FOREIGN KEY (shared_by) REFERENCES user_account(id) ON DELETE SET NULL
+) ENGINE=InnoDB;

@@ -30,7 +30,7 @@ export function errorHandler(err, req, res, next) {
     return res.status(400).json({ error: 'file_too_large', message: 'Each file must be 5 MB or smaller.' })
   }
   if (err?.code === 'LIMIT_FILE_COUNT' || err?.code === 'LIMIT_UNEXPECTED_FILE') {
-    return res.status(400).json({ error: 'too_many_files', message: 'Upload at most 5 files in the "evidence" field.' })
+    return res.status(400).json({ error: 'too_many_files', message: 'Upload at most 5 evidence files, or one flyer image.' })
   }
   if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'bad_json', message: 'Request body is not valid JSON.' })

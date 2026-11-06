@@ -15,17 +15,29 @@ const TYPES = {
   'image/jpeg': { ext: '.jpg', magic: [Buffer.from([0xff, 0xd8, 0xff])] },
 }
 
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => cb(null, randomBytes(16).toString('hex') + TYPES[file.mimetype].ext),
+})
+
 export const evidenceUpload = multer({
-  storage: multer.diskStorage({
-    destination: uploadDir,
-    filename: (req, file, cb) => cb(null, randomBytes(16).toString('hex') + TYPES[file.mimetype].ext),
-  }),
+  storage,
   limits: { fileSize: config.uploads.maxBytes, files: config.uploads.maxFiles, fields: 10 },
   fileFilter: (req, file, cb) => {
     if (TYPES[file.mimetype]) cb(null, true)
     else cb(badRequest('Evidence must be a PDF, PNG or JPG file.', 'bad_file_type'))
   },
 }).array('evidence', config.uploads.maxFiles)
+
+// One photo per event flyer (field "image"), PNG or JPG
+export const flyerUpload = multer({
+  storage,
+  limits: { fileSize: config.uploads.maxBytes, files: 1, fields: 10 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg') cb(null, true)
+    else cb(badRequest('The flyer must be a PNG or JPG photo.', 'bad_file_type'))
+  },
+}).single('image')
 
 // The browser-supplied type can lie, so check the first bytes of each saved file too.
 export async function verifyFiles(files) {

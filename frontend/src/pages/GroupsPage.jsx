@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api } from '../api'
 import { useAuth, useToast } from '../context'
+import UnionFlyers from '../components/app/UnionFlyers'
 import UnionMembers from '../components/app/UnionMembers'
 import { Dialog, Empty, ProgrammeChip, Skeleton, SlotDots } from '../components/app/kit'
 import { formatPoints, timeAgo } from '../lib/format'
@@ -319,7 +320,10 @@ export default function GroupsPage() {
             Start your own team, or ask to join one that still needs your programme.
           </Empty>
         ) : (
-          <UnionMembers group={mine.groups[0]} />
+          <>
+            <UnionMembers group={mine.groups[0]} />
+            <UnionFlyers />
+          </>
         )}
       </section>
       )}

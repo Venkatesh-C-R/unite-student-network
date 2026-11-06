@@ -387,6 +387,10 @@ const ACTION_LABEL = {
   claim_reopened: 'Reopened a claim',
   claim_withdrawn: 'Withdrew a claim',
   member_restored: 'Restored a member',
+  flyer_posted: 'Posted a flyer',
+  flyer_shared: 'Shared a flyer',
+  flyer_deleted: 'Deleted own flyer',
+  flyer_removed: 'Removed a flyer',
 }
 
 function targetLink(a) {
