@@ -1,4 +1,4 @@
-import { Award, ClipboardCheck, LogOut, Moon, Search, ShieldCheck, Sun, Trophy, User, Users } from 'lucide-react'
+import { Award, ClipboardCheck, LogOut, Megaphone, Moon, Search, ShieldCheck, Sun, Trophy, User, Users } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth } from '../../context'
@@ -9,6 +9,7 @@ import NotificationsBell from './NotificationsBell'
 
 const STUDENT_NAV = [
   ['/groups', 'Unions', Users],
+  ['/flyers', 'Flyers', Megaphone],
   ['/discover', 'Discover', Search],
   ['/claims', 'Claims', Award],
   ['/leaderboard', 'Leaderboard', Trophy],
@@ -18,6 +19,7 @@ const STUDENT_NAV = [
 const STAFF_NAV = [
   ['/review', 'Review', ClipboardCheck],
   ['/groups', 'Unions', Users],
+  ['/flyers', 'Flyers', Megaphone],
   ['/discover', 'Discover', Search],
   ['/leaderboard', 'Leaderboard', Trophy],
   ['/profile', 'Profile', User],
@@ -26,6 +28,7 @@ const ADMIN_NAV = [
   ['/review', 'Review', ClipboardCheck],
   ['/admin', 'Admin', ShieldCheck],
   ['/groups', 'Unions', Users],
+  ['/flyers', 'Flyers', Megaphone],
   ['/leaderboard', 'Leaderboard', Trophy],
   ['/profile', 'Profile', User],
 ]
@@ -112,7 +115,11 @@ export default function AppShell({ theme, onToggleTheme }) {
       </main>
 
       {user && (
-        <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-surface z-40 grid grid-cols-5 pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="Main">
+        <nav
+          className="fixed inset-x-0 bottom-0 border-t border-line bg-surface z-40 grid pb-[env(safe-area-inset-bottom)] md:hidden"
+          style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }}
+          aria-label="Main"
+        >
           {NAV.map(([to, label, Icon]) => (
             <NavLink
               key={to}

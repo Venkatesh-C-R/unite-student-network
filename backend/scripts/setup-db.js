@@ -6,7 +6,7 @@ import mysql from 'mysql2/promise'
 import { config } from '../src/config.js'
 
 const TABLES = [
-  'activity_log', 'notification', 'points_award', 'evidence', 'achievement', 'team_group', 'event_team', 'event',
+  'flyer_share', 'flyer_comment', 'flyer_like', 'flyer', 'activity_log', 'notification', 'points_award', 'evidence', 'achievement', 'team_group', 'event_team', 'event',
   'poll_vote', 'poll_option', 'poll', 'group_invite', 'group_join_request', 'group_member', 'collab_group',
   'user_report', 'user_block', 'friend_request', 'profile_link', 'student_interest', 'email_otp',
   'sessions', 'user_account', 'programme',
