@@ -10,6 +10,10 @@ if (!values.email || !values.name || !['faculty', 'admin'].includes(values.role)
   console.error('Usage: npm run staff -- --email you@psgtech.ac.in --name "Full Name" --role faculty|admin')
   process.exit(1)
 }
+if (values.email.length > 30) {
+  console.error('Email addresses can be at most 30 characters.')
+  process.exit(1)
+}
 
 await pool.query(
   `INSERT INTO user_account (email, name, role) VALUES (?, ?, ?)

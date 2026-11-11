@@ -36,6 +36,24 @@ export async function setupDatabase({ reset = false } = {}) {
     await conn.query(`ALTER TABLE email_otp MODIFY purpose ENUM('signup','reset','login') NOT NULL`)
     await conn.query(`DELETE FROM email_otp WHERE purpose = 'reset'`)
     await conn.query(`ALTER TABLE email_otp MODIFY purpose ENUM('signup','login') NOT NULL`)
+
+    // Smaller columns: ASCII emails and roll numbers, the code hash as 32 raw bytes, file types
+    // as ENUMs and a 4-byte activity id. A change that a stored value would not fit is refused.
+    const [[otpHash]] = await conn.query(
+      `SELECT COLUMN_TYPE AS type FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_otp' AND COLUMN_NAME = 'code_hash'`,
+    )
+    if (otpHash.type === 'char(64)') {
+      // Old hashes are 64 hex characters: turn them into the 32 bytes they spell
+      await conn.query('ALTER TABLE email_otp MODIFY code_hash VARBINARY(64) NOT NULL')
+      await conn.query('UPDATE email_otp SET code_hash = UNHEX(code_hash)')
+      await conn.query('ALTER TABLE email_otp MODIFY code_hash BINARY(32) NOT NULL')
+    }
+    await conn.query('ALTER TABLE user_account MODIFY email VARCHAR(30) CHARACTER SET ascii NOT NULL, MODIFY roll_no VARCHAR(10) CHARACTER SET ascii NULL')
+    await conn.query('ALTER TABLE email_otp MODIFY email VARCHAR(30) CHARACTER SET ascii NOT NULL')
+    await conn.query(`ALTER TABLE evidence MODIFY mime_type ENUM('application/pdf','image/png','image/jpeg') NOT NULL`)
+    await conn.query(`ALTER TABLE flyer MODIFY image_type ENUM('image/png','image/jpeg') NOT NULL`)
+    await conn.query('ALTER TABLE activity_log MODIFY id INT UNSIGNED NOT NULL AUTO_INCREMENT')
   } finally {
     await conn.end()
   }

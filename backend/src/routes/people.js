@@ -105,7 +105,7 @@ peopleRouter.get('/students', async (req, res) => {
   const params = [req.user.id, req.user.id, req.user.id]
   if (q.q) {
     const like = `%${q.q.replace(/[\\%_]/g, '\\$&')}%`
-    where.push('(u.name LIKE ? OR u.roll_no LIKE ?)')
+    where.push('(u.name LIKE ? OR CONVERT(u.roll_no USING utf8mb4) LIKE ?)')
     params.push(like, like)
   }
   if (q.programmeId) {

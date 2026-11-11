@@ -87,3 +87,15 @@ test('the demo code signs in demo accounts only, and only when configured', asyn
     config.demoLoginCode = null
   }
 })
+
+test('emails longer than 30 characters are refused before reaching the database', async () => {
+  const long = 'a.very.long.faculty@psgtech.ac.in' // 33 characters
+  for (const purpose of ['signup', 'login']) {
+    const res = await agent(app).post('/api/auth/otp').send({ email: long, purpose })
+    assert.equal(res.status, 400, purpose)
+    assert.match(JSON.stringify(res.body), /at most 30 characters/)
+  }
+  // 30 is still allowed
+  const ok = await agent(app).post('/api/auth/otp').send({ email: 'abcdefghij.mca@psgtech.ac.in'.padStart(30, 'x'), purpose: 'login' })
+  assert.equal(ok.status, 200)
+})

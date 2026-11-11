@@ -200,6 +200,7 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
                         id="email"
                         label="College email"
                         type="email"
+                        maxLength={30}
                         autoComplete="email"
                         placeholder="26mx354@psgtech.ac.in"
                         value={form.email}

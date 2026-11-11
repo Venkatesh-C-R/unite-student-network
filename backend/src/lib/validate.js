@@ -7,7 +7,7 @@ export const email = z
   .string()
   .trim()
   .toLowerCase()
-  .max(190)
+  .max(30, 'Email addresses can be at most 30 characters.')
   .pipe(z.email({ message: 'Enter a valid email address.' }))
 
 export const otpCode = z.string().trim().regex(/^\d{6}$/, 'The code has 6 digits.')

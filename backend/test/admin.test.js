@@ -126,3 +126,18 @@ test('admin restores a member a leader removed', async () => {
   assert.ok(members.includes(member.id))
   assert.equal((await admin.agent.post(`/api/admin/activity/${log.id}/restore-member`)).status, 409, 'cannot restore twice')
 })
+
+test('searches with non-English letters work against the ASCII email and roll-number columns', async () => {
+  const admin = await signedIn(app, { role: 'admin' })
+  const faculty = await signedIn(app, { role: 'faculty' })
+  const s = await signedIn(app, { programmeId: P.MCA, name: 'Zoé Tamil' })
+  for (const q of ['Zoé', 'தமிழ்', '😀']) {
+    const users = await admin.agent.get('/api/admin/users').query({ q })
+    assert.equal(users.status, 200, `admin users: ${q}`)
+    assert.equal((await admin.agent.get('/api/admin/activity').query({ q })).status, 200, `activity: ${q}`)
+    assert.equal((await s.agent.get('/api/students').query({ q })).status, 200, `students: ${q}`)
+    assert.equal((await faculty.agent.get('/api/review/achievements').query({ q })).status, 200, `review: ${q}`)
+  }
+  const found = (await admin.agent.get('/api/admin/users').query({ q: 'Zoé' })).body.users
+  assert.ok(found.some((u) => u.id === s.id))
+})

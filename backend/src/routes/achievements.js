@@ -150,7 +150,7 @@ achievementsRouter.get('/review/achievements', requireRole('faculty', 'admin'), 
     if (ref) rows = await all(`${ACH_SELECT} WHERE a.id = ?`, [Number(ref[1])])
     else {
       const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`
-      rows = await all(`${ACH_SELECT} WHERE s.name LIKE ? OR s.roll_no LIKE ? OR e.title LIKE ? ORDER BY a.id DESC LIMIT 100`, [like, like, like])
+      rows = await all(`${ACH_SELECT} WHERE s.name LIKE ? OR CONVERT(s.roll_no USING utf8mb4) LIKE ? OR e.title LIKE ? ORDER BY a.id DESC LIMIT 100`, [like, like, like])
     }
   } else rows = await all(`${ACH_SELECT} WHERE a.status = ? ORDER BY a.id ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 100`, [status])
   res.json({ achievements: await withDetails(rows) })
