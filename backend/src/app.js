@@ -33,12 +33,15 @@ export function createApp() {
       store,
       resave: false,
       saveUninitialized: false,
+      // Stay signed in on this device until the user logs out. Every visit pushes the expiry
+      // forward again; 400 days is the longest a browser keeps a cookie, so only someone who
+      // does not open UNITE for 400 days is signed out without logging out.
       rolling: true,
       cookie: {
         httpOnly: true,
         sameSite: 'lax',
         secure: config.isProd,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: config.sessionDays * 24 * 60 * 60 * 1000,
       },
     }),
   )

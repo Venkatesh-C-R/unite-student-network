@@ -1,0 +1,26 @@
+# systemd service that keeps the UNITE API running and restarts it after a crash or reboot.
+# Copy to /etc/systemd/system/unite-api.service, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now unite-api
+# Logs: journalctl -u unite-api -f
+
+[Unit]
+Description=UNITE API (Node.js)
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=unite
+WorkingDirectory=/opt/unite/backend
+ExecStart=/usr/bin/node --env-file=.env src/server.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+# Uploaded files live outside the code folder so a fresh checkout never loses them
+ReadWritePaths=/var/lib/unite
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

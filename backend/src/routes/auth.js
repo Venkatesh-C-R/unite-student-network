@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { z } from 'zod'
 import { config } from '../config.js'
 import { one, pool, withTransaction } from '../db.js'
@@ -10,8 +10,22 @@ import { logActivity } from '../lib/activity.js'
 
 export const authRouter = Router()
 
-const limiter = (limit) =>
-  rateLimit({ windowMs: 15 * 60 * 1000, limit, standardHeaders: 'draft-8', legacyHeaders: false, skip: () => config.env === 'test' })
+// Two limits per 15 minutes on each sign-in step: a tight one per email address, and a loose
+// one per IP address, because a whole campus can reach the internet through one public IP.
+const windowMs = 15 * 60 * 1000
+const tooMany = { error: 'rate_limited', message: 'Too many tries. Please wait a few minutes and try again.' }
+const skip = () => config.env === 'test' && !config.rateLimits.inTests
+const perIp = (limit) =>
+  rateLimit({ windowMs, limit, standardHeaders: 'draft-8', legacyHeaders: false, message: tooMany, skip })
+export const emailKey = (req) => {
+  const e = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
+  return e ? `email:${e}` : `ip:${ipKeyGenerator(req.ip)}`
+}
+const perEmail = (limit) =>
+  rateLimit({ windowMs, limit, keyGenerator: emailKey, standardHeaders: 'draft-8', legacyHeaders: false, message: tooMany, skip })
+const { otpPerEmail, otpPerIp, verifyPerEmail, verifyPerIp } = config.rateLimits
+const otpLimits = [perIp(otpPerIp), perEmail(otpPerEmail)]
+const verifyLimits = [perIp(verifyPerIp), perEmail(verifyPerEmail)]
 
 function studentRoll(addr) {
   const m = addr.match(config.studentEmail)
@@ -35,7 +49,7 @@ export async function publicMe(userId) {
 }
 
 // Step 1: email a 6-digit code. UNITE has no passwords: every sign-up and sign-in is by code.
-authRouter.post('/otp', limiter(10), async (req, res) => {
+authRouter.post('/otp', otpLimits, async (req, res) => {
   const body = z.object({ email, purpose: z.enum(['signup', 'login']) }).parse(req.body)
   const existing = await one('SELECT id, is_active FROM user_account WHERE email = ?', [body.email])
 
@@ -51,7 +65,7 @@ authRouter.post('/otp', limiter(10), async (req, res) => {
 })
 
 // Step 2 (new students): verify the code and create the account
-authRouter.post('/register', limiter(20), async (req, res) => {
+authRouter.post('/register', verifyLimits, async (req, res) => {
   const body = z
     .object({
       email,
@@ -87,7 +101,7 @@ authRouter.post('/register', limiter(20), async (req, res) => {
 })
 
 // Step 2 (everyone else): sign in with the emailed code
-authRouter.post('/login', limiter(20), async (req, res) => {
+authRouter.post('/login', verifyLimits, async (req, res) => {
   const body = z.object({ email, otp: otpCode }).parse(req.body)
   const user = await one('SELECT id, is_active FROM user_account WHERE email = ?', [body.email])
   // Demo accounts may use the fixed demo code (development only; see DEMO_LOGIN_CODE)

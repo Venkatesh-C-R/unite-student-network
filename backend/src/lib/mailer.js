@@ -26,14 +26,52 @@ async function sendResend({ to, subject, text, html }) {
   if (!res.ok) throw new Error(`Resend send failed: ${res.status} ${await res.text()}`)
 }
 
-export async function sendMail(msg) {
-  const { provider } = config.mail
-  if (provider === 'brevo' && config.mail.brevoKey) return sendBrevo(msg)
-  if (provider === 'resend' && config.mail.resendKey) return sendResend(msg)
-  if (provider !== 'console') console.warn(`[mail] ${provider} selected but no API key set; printing instead.`)
+// Any SMTP server. With a Google Workspace account (smtp.gmail.com) one address can send about
+// 2,000 emails a day, and mail between two psgtech.ac.in addresses stays inside the college.
+let transport
+async function sendSmtp({ to, subject, text, html }) {
+  if (!transport) {
+    const { default: nodemailer } = await import('nodemailer')
+    const { host, port, user, pass } = config.mail.smtp
+    transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, pool: true })
+  }
+  await transport.sendMail({ from: config.mail.from, to, subject, text, html })
+}
+
+function printMail(msg) {
   outbox.push(msg)
   if (outbox.length > 50) outbox.shift()
   if (config.env !== 'test') console.log(`[mail] to=${msg.to} subject="${msg.subject}"\n${msg.text}\n`)
+}
+
+// Providers that are listed but not set up are skipped, so a missing key never sends nothing
+const PROVIDERS = {
+  smtp: { ready: () => Boolean(config.mail.smtp.user && config.mail.smtp.pass), send: sendSmtp },
+  brevo: { ready: () => Boolean(config.mail.brevoKey), send: sendBrevo },
+  resend: { ready: () => Boolean(config.mail.resendKey), send: sendResend },
+  console: { ready: () => true, send: printMail },
+}
+// Tests replace a provider's send function here
+export const providers = PROVIDERS
+
+// Tries each configured provider in turn (MAIL_PROVIDER=smtp,brevo): when one fails, for
+// example because its daily limit is used up, the next one sends. Throws if none could.
+export async function sendMail(msg) {
+  const list = config.mail.providers.filter((p) => PROVIDERS[p]?.ready())
+  if (!list.length) {
+    console.warn(`[mail] no provider in "${config.mail.providers.join(',')}" is set up; printing instead.`)
+    return printMail(msg)
+  }
+  let lastError
+  for (const name of list) {
+    try {
+      return await PROVIDERS[name].send(msg)
+    } catch (e) {
+      lastError = e
+      console.error(`[mail] ${name} failed for ${msg.to}: ${e.message}`)
+    }
+  }
+  throw lastError
 }
 
 export function otpEmail(to, code, purpose) {

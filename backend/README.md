@@ -10,7 +10,7 @@ cp .env.example .env           # then fill it in (see Settings below)
 npm install
 npm run db:setup               # creates tables, loads the 44 programmes, upgrades an older database (safe to re-run)
 npm run dev                    # http://localhost:4000, restarts on file changes
-npm test                       # 42 integration tests against the unite_test database (.env.test)
+npm test                       # 45 integration tests against the unite_test database (.env.test)
 npm run seed:demo              # optional: demo students, groups, a poll and points (dev database only)
 ```
 
@@ -32,12 +32,14 @@ Copy `.env.example` to `.env` (and to `.env.test` with `DB_NAME=unite_test` for 
 
 | Variable | Meaning |
 |---|---|
-| `MAIL_PROVIDER` | `console` (codes printed in the server log), `brevo` or `resend` |
+| `MAIL_PROVIDER` | `console` (codes printed in the server log), `smtp`, `brevo` or `resend`; or several in order, e.g. `smtp,brevo`, so the next one sends when one fails or hits its daily limit |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP login for `smtp`. For a Google Workspace account: `smtp.gmail.com`, `465`, the address, and an app password |
+| `RATE_LIMIT_OTP_PER_IP` / `RATE_LIMIT_VERIFY_PER_IP` | Optional. Sign-in requests per IP every 15 minutes (default 300 / 600; high because a campus shares one IP) |
 | `MAIL_FROM` | Sender, e.g. `UNITE <unite.team@gmail.com>`; must be verified with the provider |
 | `BREVO_API_KEY` / `RESEND_API_KEY` | API key for the chosen provider |
 | `APP_ORIGIN` | The site's origin; other origins are refused on POST/PUT/PATCH/DELETE |
 
-**Email provider tip:** Brevo can send from a single verified address (no domain needed), so it can deliver to `@psgtech.ac.in` inboxes straight away. Resend needs a verified domain before it can send to addresses other than your own.
+**Email provider tip:** a college Google Workspace account (`smtp`) can send about 2,000 emails a day, and mail between `psgtech.ac.in` addresses stays inside the college. Brevo's free plan (300 a day) can send from a single verified address with no domain, so it makes a good backup. Resend needs a verified domain before it can send to addresses other than your own. See [DEPLOY.md](../DEPLOY.md) for a free production setup.
 
 ## Decisions used (change in code if the team decides otherwise)
 
@@ -48,6 +50,9 @@ Copy `.env.example` to `.env` (and to `.env.test` with `DB_NAME=unite_test` for 
 | Leadership | Groups are called unions in the app. The creator is leader (`owner`); the leader can name one second in command (`deputy`), who can also approve join requests | `src/routes/groups.js` |
 | Leader leaves | Second in command becomes leader, else the longest-standing member; empty group is deleted | `src/routes/groups.js` |
 | Sign-up | Only `rollno@psgtech.ac.in`; emailed code (6 digits, 10 min, 5 tries) for both sign-up and sign-in; no passwords | `src/routes/auth.js`, `src/config.js` |
+| Staying signed in | A sign-in lasts on that device until the user logs out; each visit renews it for 400 days (the longest a browser keeps a cookie) | `src/app.js` |
+| Sign-in limits | Every 15 minutes: 5 code requests and 10 code checks per email address, plus a loose per-IP cap (300 / 600) so a campus sharing one IP is never blocked | `src/routes/auth.js`, `src/config.js` |
+| Email failure | If no provider can send, the code is discarded and the student is told to try again in a few minutes | `src/lib/otp.js`, `src/lib/mailer.js` |
 | Email length | At most 30 characters (college emails are about 21), checked on the server, in the sign-in box and by `npm run staff` | `src/lib/validate.js` |
 | Flyers | Students and faculty post PNG/JPG flyer photos (≤ 5 MB); anyone signed in can like and comment; union members share with their union; the poster or an admin can delete | `src/routes/flyers.js` |
 | Points for multi-group teams | **Every** group in the event team gets the full points | `src/routes/achievements.js` |

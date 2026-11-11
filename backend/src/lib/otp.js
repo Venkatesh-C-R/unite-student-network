@@ -17,12 +17,18 @@ export async function issueOtp(email, purpose) {
   if (recent) throw new HttpError(429, 'Please wait a minute before asking for another code.', 'otp_cooldown')
 
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
-  await pool.query(
+  const [r] = await pool.query(
     `INSERT INTO email_otp (email, purpose, code_hash, expires_at)
      VALUES (?, ?, ?, NOW() + INTERVAL ? MINUTE)`,
     [email, purpose, hash(email, code), config.otp.ttlMinutes],
   )
-  await sendMail(otpEmail(email, code, purpose))
+  try {
+    await sendMail(otpEmail(email, code, purpose))
+  } catch {
+    // Nothing was sent: drop the code so the user can ask again straight away
+    await pool.query('DELETE FROM email_otp WHERE id = ?', [r.insertId])
+    throw new HttpError(503, 'We could not send the email just now. Please try again in a few minutes.', 'mail_unavailable')
+  }
 }
 
 // Checks the newest unused code and consumes it on success, inside the caller's transaction.
