@@ -48,6 +48,8 @@ On Windows or Linux, install Node.js and MySQL the usual way for your system and
    - **Mac:** double-click `start-unite.command` (or run `./start-unite.command`). It starts MySQL, the API and the website, and opens the site. Close its window to stop.
    - **Windows / Linux:** run `npm run dev` in `backend/` and `npm run dev` in `frontend/`, each in its own terminal, then open http://localhost:5173.
 
+After pulling new code later, run `npm run db:setup` in `backend/` once. It upgrades your tables in place and keeps your data.
+
 ## Demo accounts
 
 Sign in with one of these emails and the code from `DEMO_LOGIN_CODE` (e.g. `123456`). The fixed code works only for demo accounts and never in production; other accounts get their code by email (with `MAIL_PROVIDER=console` it is printed in the backend terminal).
