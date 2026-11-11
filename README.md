@@ -63,6 +63,10 @@ Sign in with one of these emails and the code from `DEMO_LOGIN_CODE` (e.g. `1234
 
 Run `npm run seed:demo` in `backend/` at any time to reset the demo data. It refuses to run in production or on the test database.
 
+## Going live
+
+[DEPLOY.md](DEPLOY.md) explains how to run UNITE for free for up to about 12,000 students: an Oracle Cloud Always Free server for the website, API and database, and a college Google Workspace account (with Brevo as backup) for sign-in emails. The config files it uses are in [`deploy/`](deploy/).
+
 ## Tests
 
 Create a second database and settings file for the tests (they reset its tables on every run):

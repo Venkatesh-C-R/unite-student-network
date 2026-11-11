@@ -1,0 +1,14 @@
+# MySQL settings for UNITE on a 12 GB server.
+# Copy to /etc/mysql/mysql.conf.d/unite.cnf and restart MySQL: sudo systemctl restart mysql
+
+[mysqld]
+# Only the API on this machine talks to MySQL
+bind-address = 127.0.0.1
+
+# Keep the whole database and its indexes in memory (far more than UNITE needs for 12,000
+# students). This also keeps memory use above Oracle's "idle" threshold of 20%.
+innodb_buffer_pool_size = 4G
+
+max_connections = 200
+character-set-server = utf8mb4
+collation-server = utf8mb4_0900_ai_ci
