@@ -537,7 +537,7 @@ export default function ClaimsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="glass gradient-border relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+      <section className="glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
         <div className="bg-gradient-brand pointer-events-none absolute -right-20 -bottom-24 h-64 w-64 rounded-full opacity-25 blur-3xl" />
         <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>

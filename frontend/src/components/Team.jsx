@@ -35,7 +35,7 @@ export default function Team() {
           ))}
         </div>
         <Reveal delay={0.2}>
-          <div className="glass gradient-border mx-auto mt-6 flex max-w-md items-center gap-4 rounded-3xl p-6">
+          <div className="glass mx-auto mt-6 flex max-w-md items-center gap-4 rounded-3xl p-6">
             <span className="bg-gradient-brand grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white">
               <GraduationCap size={26} />
             </span>

@@ -116,14 +116,6 @@ achievementsRouter.get('/achievements/mine', requireUser, async (req, res) => {
   res.json({ achievements: await withDetails(rows) })
 })
 
-achievementsRouter.get('/achievements/:id', requireUser, async (req, res) => {
-  const { id: achId } = z.object({ id }).parse(req.params)
-  if (!(await canView(req.user, achId))) throw notFound('Achievement not found.')
-  const [row] = await withDetails(await all(`${ACH_SELECT} WHERE a.id = ?`, [achId]))
-  if (!row) throw notFound('Achievement not found.')
-  res.json({ achievement: row })
-})
-
 achievementsRouter.get('/evidence/:id', requireUser, async (req, res) => {
   const { id: fileId } = z.object({ id }).parse(req.params)
   const file = await one('SELECT * FROM evidence WHERE id = ?', [fileId])

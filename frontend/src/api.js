@@ -1,6 +1,6 @@
 // Small wrapper for the UNITE API. Cookies carry the session; the X-UNITE header is required
 // by the server's CSRF check on every state-changing request.
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor(status, body) {
     super(body?.message || 'Something went wrong. Please try again.')
     this.status = status

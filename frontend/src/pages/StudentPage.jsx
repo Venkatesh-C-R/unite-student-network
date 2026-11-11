@@ -87,7 +87,7 @@ export default function StudentPage() {
         <ArrowLeft size={16} /> Back
       </button>
 
-      <section className="glass gradient-border relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+      <section className="glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
         <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full opacity-30 blur-3xl" style={{ background: programmeColor(profile.programmeId ?? 0) }} />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="bg-gradient-brand w-fit rounded-full p-[3px]">

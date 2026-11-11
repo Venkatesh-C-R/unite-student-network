@@ -36,16 +36,13 @@
   --color-line: var(--border);
   --color-ink: var(--text);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
   /* Banner red and star gold replace the old blue/violet/indigo/cyan palette everywhere */
   --color-violet-300: #f2c14e;
   --color-violet-400: #d23b3b;
   --color-violet-500: #bb2525;
   --color-violet-600: #9c1e1e;
   --color-violet-900: #4a0d0b;
-  --color-indigo-600: #bb2525;
   --color-indigo-700: #9c1e1e;
-  --color-cyan-400: #f2c14e;
   --color-cyan-500: #d8a227;
   --font-display: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
@@ -88,29 +85,12 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
 }
-.mesh,
-.grid-overlay { display: none; }
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.marquee {
-  animation: marquee 45s linear infinite;
-}
 
 /* Lenis */
 html.lenis,
 html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
-
-@media (prefers-reduced-motion: reduce) {
-  .mesh span,
-  .marquee {
-    animation: none;
-  }
-}
 
 :focus-visible {
   outline: 2px solid #d8352e;

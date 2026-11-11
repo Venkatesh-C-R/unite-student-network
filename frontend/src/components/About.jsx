@@ -2,7 +2,7 @@ import { animate, motion, useInView } from 'framer-motion'
 import { Check, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { PROGRAMMES } from '../data'
-import { Glow, Reveal, SectionHeading } from './ui'
+import { Reveal, SectionHeading } from './ui'
 
 function Counter({ to, suffix = '' }) {
   const ref = useRef(null)
@@ -44,7 +44,6 @@ const AFTER = [
 export default function About() {
   return (
     <section id="about" className="relative px-5 py-28">
-      <Glow className="top-40 -left-48" color="bg-indigo-600" />
       <div className="relative mx-auto max-w-6xl">
         <SectionHeading title={<>Great ideas happen <span className="text-gradient">between</span> disciplines</>}>
           Most student teams are built from one classroom. UNITE helps you meet people from other programmes and build
@@ -54,7 +53,7 @@ export default function About() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STATS.map((s, i) => (
             <Reveal key={s.label} delay={i * 0.08}>
-              <div className="glass gradient-border rounded-3xl p-6 text-center">
+              <div className="glass rounded-3xl p-6 text-center">
                 <p className="text-gradient font-display text-5xl font-bold">
                   <Counter to={s.value} />
                 </p>
@@ -83,7 +82,7 @@ export default function About() {
           <Reveal delay={0.1}>
             <motion.div
               whileHover={{ y: -4 }}
-              className="glass gradient-border h-full rounded-3xl p-8 shadow-[0_20px_80px_-30px_rgba(139,92,246,0.6)]"
+              className="glass h-full rounded-3xl p-8 shadow-[0_20px_80px_-30px_rgba(139,92,246,0.6)]"
             >
               <h3 className="mb-5 font-display text-xl font-semibold">
                 With <span className="text-gradient">UNITE</span>

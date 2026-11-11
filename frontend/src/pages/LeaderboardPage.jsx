@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
         </Empty>
       ) : (
         <>
-          <section className="glass gradient-border rounded-[2rem] px-4 pt-8 sm:px-10">
+          <section className="glass rounded-[2rem] px-4 pt-8 sm:px-10">
             <Podium rows={ranked} mine={mine} />
           </section>
 

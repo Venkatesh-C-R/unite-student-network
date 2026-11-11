@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useAnimation } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { MAX_GROUP_SIZE, PROGRAMMES } from '../data'
-import { Glow, Reveal, SectionHeading } from './ui'
+import { Reveal, SectionHeading } from './ui'
 
 const COLORS = ['#BB2525', '#D8A227', '#9A1916', '#E2703A', '#6B5E4A', '#BB2525']
 const NAMES = ['Aarav', 'Diya', 'Kavin', 'Meera', 'Rahul', 'Sneha', 'Arjun', 'Nila', 'Vikram', 'Priya']
@@ -50,7 +50,6 @@ export default function Playground() {
 
   return (
     <section id="playground" className="relative px-5 py-28">
-      <Glow className="top-1/4 -right-48" color="bg-cyan-500" />
       <div className="relative mx-auto max-w-6xl">
         <SectionHeading title={<>The <span className="text-gradient">six-programme</span> rule, live</>}>
           Build a demo group. UNITE accepts up to six students, and never two from the same programme — just like the
@@ -58,7 +57,7 @@ export default function Playground() {
         </SectionHeading>
 
         <Reveal>
-          <div className="glass gradient-border grid grid-cols-1 gap-8 rounded-[2rem] p-5 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <div className="glass grid grid-cols-1 gap-8 rounded-[2rem] p-5 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
             <div className="min-w-0">
               <label htmlFor="prog" className="mb-2 block text-sm font-semibold">
                 Programme of the new student
