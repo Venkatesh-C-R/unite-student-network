@@ -68,7 +68,7 @@ adminRouter.get('/users', async (req, res) => {
   const params = []
   if (q.q) {
     const like = `%${q.q.replace(/[\\%_]/g, '\\$&')}%`
-    where.push('(u.name LIKE ? OR u.email LIKE ? OR u.roll_no LIKE ?)')
+    where.push('(u.name LIKE ? OR CONVERT(u.email USING utf8mb4) LIKE ? OR CONVERT(u.roll_no USING utf8mb4) LIKE ?)')
     params.push(like, like, like)
   }
   if (q.role) {
@@ -149,7 +149,7 @@ adminRouter.get('/activity', async (req, res) => {
   }
   if (f.q) {
     const like = `%${f.q.replace(/[\\%_]/g, '\\$&')}%`
-    where.push('(u.name LIKE ? OR u.email LIKE ? OR u.roll_no LIKE ? OR l.details LIKE ?)')
+    where.push('(u.name LIKE ? OR CONVERT(u.email USING utf8mb4) LIKE ? OR CONVERT(u.roll_no USING utf8mb4) LIKE ? OR l.details LIKE ?)')
     args.push(like, like, like, like)
   }
   const rows = await all(

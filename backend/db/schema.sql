@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS programme (
 
 CREATE TABLE IF NOT EXISTS user_account (
   id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  email          VARCHAR(190) NOT NULL UNIQUE,
-  roll_no        VARCHAR(20)  NULL UNIQUE,      -- students only
+  email          VARCHAR(30) CHARACTER SET ascii NOT NULL UNIQUE,  -- college emails: plain ASCII, at most 30 characters
+  roll_no        VARCHAR(10) CHARACTER SET ascii NULL UNIQUE,   -- students only, e.g. 26MX354
   name           VARCHAR(100) NOT NULL,
   role           ENUM('student','faculty','admin') NOT NULL DEFAULT 'student',
   programme_id   SMALLINT UNSIGNED NULL,        -- required for students (enforced in app)
@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS user_account (
 
 CREATE TABLE IF NOT EXISTS email_otp (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  email        VARCHAR(190) NOT NULL,
+  email        VARCHAR(30) CHARACTER SET ascii NOT NULL,
   purpose      ENUM('signup','login') NOT NULL,
-  code_hash    CHAR(64) NOT NULL,               -- HMAC-SHA256, never the plain code
+  code_hash    BINARY(32) NOT NULL,             -- HMAC-SHA256 as raw bytes, never the plain code
   attempts     TINYINT UNSIGNED NOT NULL DEFAULT 0,
   expires_at   DATETIME NOT NULL,
   consumed_at  DATETIME NULL,
@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS evidence (
   achievement_id  INT UNSIGNED NOT NULL,
   stored_name     VARCHAR(80)  NOT NULL,          -- random name on disk
   original_name   VARCHAR(200) NOT NULL,
-  mime_type       VARCHAR(40)  NOT NULL,
+  mime_type       ENUM('application/pdf','image/png','image/jpeg') NOT NULL,
   size_bytes      INT UNSIGNED NOT NULL,
   uploaded_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_evidence_ach FOREIGN KEY (achievement_id) REFERENCES achievement(id) ON DELETE CASCADE
@@ -277,7 +277,7 @@ CREATE TABLE IF NOT EXISTS notification (
 
 -- Who did what, when and from where. Kept when the user is deleted (user_id becomes NULL).
 CREATE TABLE IF NOT EXISTS activity_log (
-  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id      INT UNSIGNED NULL,
   action       VARCHAR(40) NOT NULL,
   target_type  VARCHAR(20) NULL,
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS flyer (
   event_date  DATE NULL,
   link        VARCHAR(500) NULL,
   image_name  VARCHAR(80) NOT NULL,
-  image_type  VARCHAR(40) NOT NULL,
+  image_type  ENUM('image/png','image/jpeg') NOT NULL,
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX ix_flyer_author (author_id),
   CONSTRAINT fk_flyer_author FOREIGN KEY (author_id) REFERENCES user_account(id) ON DELETE CASCADE
