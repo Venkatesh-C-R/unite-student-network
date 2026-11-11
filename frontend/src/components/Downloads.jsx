@@ -3,7 +3,7 @@ import { Download, Eye, FileImage, FileText, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { DOWNLOADS } from '../data'
 import { lockScroll } from '../hooks/useLenis'
-import { Glow, Reveal, SectionHeading } from './ui'
+import { Reveal, SectionHeading } from './ui'
 
 function Lightbox({ item, onClose }) {
   useEffect(() => {
@@ -57,7 +57,6 @@ export default function Downloads() {
 
   return (
     <section id="downloads" className="relative px-5 py-28">
-      <Glow className="top-1/3 -right-40" />
       <div className="relative mx-auto max-w-6xl">
         <SectionHeading title={<>Download the <span className="text-gradient">project files</span></>}>
           The abstract, design document, diagrams and quick guides for UNITE. Preview them here or download a copy.

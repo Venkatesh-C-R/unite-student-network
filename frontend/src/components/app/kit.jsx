@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { programmeColor, shortProgramme } from '../../lib/programme'
 import { btn } from '../../lib/styles'
 
-
 export function Avatar({ name, size = 40, color }) {
   const initials = name
     .split(' ')
@@ -69,7 +68,7 @@ export function Empty({ icon: Icon, title, children, action }) {
   )
 }
 
-export function Dialog({ open, onClose, title, children, wide = false }) {
+export function Dialog({ open, onClose, title, children }) {
   useEffect(() => {
     if (!open) return
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -96,7 +95,7 @@ export function Dialog({ open, onClose, title, children, wide = false }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            className={`gradient-border relative my-8 w-full ${wide ? 'max-w-lg' : 'max-w-md'} rounded-3xl bg-surface-strong p-6 shadow-2xl sm:p-7`}
+            className="relative my-8 w-full max-w-md rounded-3xl bg-surface-strong p-6 shadow-2xl sm:p-7"
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <h2 className="font-display text-xl font-bold">{title}</h2>

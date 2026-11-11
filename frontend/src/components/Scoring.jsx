@@ -2,7 +2,7 @@ import { animate, LayoutGroup, motion } from 'framer-motion'
 import { Building2, Crown, Landmark, MapPin, Medal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { DEMO_GROUPS, HOST_CATEGORIES, POSITIONS, points } from '../data'
-import { Glow, Reveal, SectionHeading } from './ui'
+import { Reveal, SectionHeading } from './ui'
 
 const CAT_ICONS = { college: Building2, state: MapPin, national: Landmark }
 
@@ -25,7 +25,7 @@ function Calculator() {
   const total = points(pos, cat)
 
   return (
-    <div className="glass gradient-border h-full rounded-[2rem] p-6 sm:p-8">
+    <div className="glass h-full rounded-[2rem] p-6 sm:p-8">
       <h3 className="font-display text-2xl font-semibold">Points calculator</h3>
       <p className="mt-1 text-sm text-muted">The host institution decides the category — not the venue or the event name.</p>
 
@@ -188,7 +188,6 @@ function Leaderboard() {
 export default function Scoring() {
   return (
     <section id="scoring" className="relative px-5 py-28">
-      <Glow className="top-1/3 -left-48" />
       <div className="relative mx-auto max-w-6xl">
         <SectionHeading title={<>Fair points, <span className="text-gradient">verified</span> wins</>}>
           1st place earns 100 base points, down to 10 for taking part. The host institution then multiplies it.

@@ -154,7 +154,7 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="gradient-border relative my-8 w-full max-w-md rounded-3xl bg-surface-strong p-7 shadow-2xl sm:p-8"
+            className="relative my-8 w-full max-w-md rounded-3xl bg-surface-strong p-7 shadow-2xl sm:p-8"
           >
             <button onClick={onClose} className="absolute top-4 right-4 rounded-full p-2 text-muted hover:bg-violet-500/10" aria-label="Close">
               <X size={18} />

@@ -44,27 +44,12 @@ export function Reveal({ children, delay = 0, y = 32, className = '' }) {
   )
 }
 
-// Kept so callers stay unchanged; the flat PSG look has no background glows
-export function Glow() {
-  return null
-}
-
-export function SectionHeading({ title, children, center = true }) {
+export function SectionHeading({ title, children }) {
   return (
-    <Reveal className={`mb-14 max-w-3xl ${center ? 'mx-auto text-center' : ''}`}>
+    <Reveal className="mx-auto mb-14 max-w-3xl text-center">
       <h2 className="font-display text-3xl font-bold leading-tight sm:text-5xl">{title}</h2>
       {children && <p className="mt-4 text-base text-muted sm:text-lg">{children}</p>}
     </Reveal>
-  )
-}
-
-// Plain button kept under its old name so callers stay unchanged
-export function MagneticButton({ as = 'button', className = '', children, ...props }) {
-  const Comp = as
-  return (
-    <Comp className={className} {...props}>
-      {children}
-    </Comp>
   )
 }
 

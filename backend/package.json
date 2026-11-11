@@ -1,9 +1,6 @@
 {
   "name": "unite-backend",
   "version": "0.1.0",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "test": "node --env-file=.env.test --test --test-concurrency=1 'test/**/*.test.js'",
     "dev": "node --watch --env-file=.env src/server.js",

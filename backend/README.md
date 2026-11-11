@@ -76,7 +76,7 @@ All paths start with `/api`. Send `X-UNITE: 1` on every non-GET request.
 - **Invites:** `GET /invites`, `POST /invites/:id/accept|decline`
 - **Polls:** `GET/POST /groups/:id/polls`, `POST /polls/:id/vote`
 - **Events:** `GET/POST /events`, `GET /events/:id`, `POST /events/:id/teams`, `POST /events/:id/teams/:teamId/groups`
-- **Achievements:** `POST /achievements` (multipart, field `evidence`), `GET /achievements/mine`, `GET /achievements/:id`, `GET /evidence/:id`
+- **Achievements:** `POST /achievements` (multipart, field `evidence`), `GET /achievements/mine`, `GET /evidence/:id`
 - **Review (faculty/admin):** `GET /review/achievements?status=`, `POST /review/achievements/:id`
 - **Leaderboard:** `GET /leaderboard`
 - **Flyers:** `GET /flyers?before=`, `GET /flyers/shared`, `POST /flyers` (multipart, field `image`), `GET /flyers/:id`, `GET /flyers/:id/image`, `POST/DELETE /flyers/:id/like`, `POST /flyers/:id/comments`, `DELETE /flyers/:id/comments/:commentId`, `POST /flyers/:id/share`, `DELETE /flyers/:id`

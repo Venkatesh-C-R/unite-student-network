@@ -38,7 +38,7 @@ async function startSession(req, userId) {
   req.session.userId = userId
 }
 
-export async function publicMe(userId) {
+async function publicMe(userId) {
   return one(
     `SELECT u.id, u.email, u.roll_no AS rollNo, u.name, u.role, u.year, u.about,
             p.id AS programmeId, p.level AS programmeLevel, p.name AS programmeName

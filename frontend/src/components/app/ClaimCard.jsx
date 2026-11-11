@@ -10,7 +10,7 @@ const STATUS = {
   withdrawn: { label: 'Withdrawn', icon: Undo2, cls: 'bg-[var(--bg-2)] text-muted' },
 }
 
-export function StatusBadge({ status }) {
+function StatusBadge({ status }) {
   const s = STATUS[status]
   const Icon = s.icon
   return (

@@ -312,7 +312,7 @@ export default function GroupDetail() {
       </Link>
 
       {/* Header */}
-      <section className="glass gradient-border relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+      <section className="glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
         <div className="bg-gradient-brand pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full opacity-20 blur-3xl" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
