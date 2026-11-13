@@ -1,75 +1,83 @@
 # UNITE
 
-University Network for Interdisciplinary Teamwork and Engagement: PSG Tech students from different programmes form unions (teams of up to six, one per programme), enter events together, claim results with evidence for faculty to verify, and climb a shared leaderboard.
+UNITE stands for University Network for Interdisciplinary Teamwork and Engagement. It's a site for PSG Tech students who want to team up with people outside their own department.
 
-- `frontend/`: React + Vite + Tailwind website (port 5173)
-- `backend/`: Node.js + Express + MySQL API (port 4000); see [backend/README.md](backend/README.md) for the rules, API and settings
+Students form a union, which is a team of up to six with at most one person from each programme. The union enters events together. When it wins or places somewhere, it claims the result and uploads proof, and a faculty member checks it. Verified results earn points, and every union shows up on one shared leaderboard.
 
-## Run it on your own computer
+The code is in two parts:
 
-Everything runs locally: your own MySQL database, the API and the website. Nothing is shared with anyone else's copy.
+- `frontend/` is the website, built with React, Vite and Tailwind. It runs on port 5173.
+- `backend/` is the API, built with Node.js, Express and MySQL. It runs on port 4000. The scoring rules, the API routes and every setting are explained in [backend/README.md](backend/README.md).
 
-You need **Node.js 20.6 or newer** and **MySQL 8**. On a Mac with Homebrew:
+## Running it on your computer
+
+Your copy is completely separate from anyone else's. You get your own MySQL database, your own API and your own website.
+
+You'll need Node.js 20.6 or newer and MySQL 8. On a Mac with Homebrew:
 
 ```bash
 brew install node mysql
 brew services start mysql
 ```
 
-On Windows or Linux, install Node.js and MySQL the usual way for your system and start MySQL.
+On Windows or Linux, install both the way you normally would and make sure MySQL is running.
 
-1. Download the code:
+1. Get the code:
 
    ```bash
    git clone https://github.com/Venkatesh-C-R/unite-student-network.git
    cd unite-student-network
    ```
 
-2. Create the database:
+2. Make an empty database:
 
    ```bash
    mysql -u root -e "CREATE DATABASE unite"
    ```
 
-3. Create the settings file from the template, then open `backend/.env` and fill in `SESSION_SECRET` (any long random text), your MySQL user and password, and `DEMO_LOGIN_CODE=123456` to use the demo accounts:
+3. Copy the settings template:
 
    ```bash
    cp backend/.env.example backend/.env
    ```
 
-4. Install everything, create the tables and load the demo data:
+   Then open `backend/.env` and fill in a few values. `SESSION_SECRET` can be any long random string. Add your MySQL username and password. Set `DEMO_LOGIN_CODE=123456` if you want to use the demo accounts.
+
+4. Install the packages, create the tables and load the demo data:
 
    ```bash
    cd backend && npm install && npm run db:setup && npm run seed:demo && cd ..
    cd frontend && npm install && cd ..
    ```
 
-5. Start it:
-   - **Mac:** double-click `start-unite.command` (or run `./start-unite.command`). It starts MySQL, the API and the website, and opens the site. Close its window to stop.
-   - **Windows / Linux:** run `npm run dev` in `backend/` and `npm run dev` in `frontend/`, each in its own terminal, then open http://localhost:5173.
+5. Start it up.
 
-After pulling new code later, run `npm run db:setup` in `backend/` once. It upgrades your tables in place and keeps your data.
+   On a Mac, double-click `start-unite.command` (or run `./start-unite.command` from a terminal). It starts MySQL, the API and the website, then opens the site in your browser. Close the window to stop everything.
+
+   On Windows or Linux, open two terminals. Run `npm run dev` in `backend/` in one and `npm run dev` in `frontend/` in the other, then go to http://localhost:5173.
+
+When you pull new code later, run `npm run db:setup` in `backend/` once. It updates your tables to match the new code and keeps your data.
 
 ## Demo accounts
 
-Sign in with one of these emails and the code from `DEMO_LOGIN_CODE` (e.g. `123456`). The fixed code works only for demo accounts and never in production; other accounts get their code by email (with `MAIL_PROVIDER=console` it is printed in the backend terminal).
+To sign in, use one of the emails below and the code you set as `DEMO_LOGIN_CODE` (`123456` if you followed the steps above). That fixed code only works for demo accounts, and it's switched off in production. Every other account gets a code by email. If `MAIL_PROVIDER` is set to `console`, the code is printed in the backend terminal instead.
 
-| Email | Who |
+| Email | Who it is |
 |---|---|
-| `26dm001@psgtech.ac.in` | Aarav, leader of Team Nova: a join request to approve, a poll, can submit claims |
-| `26dm002@psgtech.ac.in` … `26dm012@psgtech.ac.in` | Other students, in Team Nova, Circuit Breakers, Bio Bytes or no union yet |
-| `demo.faculty@psgtech.ac.in` | Faculty: two pending claims with certificates to review |
-| `demo.admin@psgtech.ac.in` | Admin: reports, users, activity log, undoing decisions |
+| `26dm001@psgtech.ac.in` | Aarav, who leads Team Nova. This account has a join request waiting for approval and an open poll, and can submit claims. |
+| `26dm002@psgtech.ac.in` to `26dm012@psgtech.ac.in` | More students. Some are in Team Nova, Circuit Breakers or Bio Bytes, and some haven't joined a union yet. |
+| `demo.faculty@psgtech.ac.in` | A faculty member with two claims waiting for review, certificates attached. |
+| `demo.admin@psgtech.ac.in` | The admin, who can see reports, manage users, read the activity log and undo decisions. |
 
-Run `npm run seed:demo` in `backend/` at any time to reset the demo data. It refuses to run in production or on the test database.
+To reset the demo data, run `npm run seed:demo` in `backend/`. It won't run in production or against the test database.
 
-## Going live
+## Putting it online
 
-[DEPLOY.md](DEPLOY.md) explains how to run UNITE for free for up to about 12,000 students: an Oracle Cloud Always Free server for the website, API and database, and a college Google Workspace account (with Brevo as backup) for sign-in emails. The config files it uses are in [`deploy/`](deploy/).
+[DEPLOY.md](DEPLOY.md) explains how to host UNITE for free for up to about 12,000 students. The website, API and database all run on one Oracle Cloud Always Free server. Sign-in emails go out through a college Google Workspace account, with Brevo as a backup. The config files for this are in [`deploy/`](deploy/).
 
 ## Tests
 
-Create a second database and settings file for the tests (they reset its tables on every run):
+The tests need their own database, because they wipe its tables every time they run. Set one up once:
 
 ```bash
 mysql -u root -e "CREATE DATABASE unite_test"

@@ -13,6 +13,9 @@ backend/uploads/*
 
 # Third-party Claude skills (reinstall from github.com/nextlevelbuilder/ui-ux-pro-max-skill)
 .claude/skills/
+# Impeccable design-tool agents and settings
+.claude/agents/impeccable-*.md
+frontend/.impeccable/
 # Personal Claude Code settings
 .claude/settings.local.json
 
