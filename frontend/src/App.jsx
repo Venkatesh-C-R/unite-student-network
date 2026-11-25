@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import { AuthProvider } from './auth'
-import { useAuth } from './context'
+import { homeFor, useAuth } from './context'
 import AppShell from './components/app/AppShell'
 import BusyStar from './components/BusyStar'
 import HoverTips from './components/HoverTips'
@@ -29,8 +29,6 @@ function initialTheme() {
 
 function SignIn({ open, onClose }) {
   const { setUser } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
   return (
     <SignInModal
       open={open}
@@ -38,11 +36,17 @@ function SignIn({ open, onClose }) {
       onSignedIn={(u) => {
         setUser(u)
         onClose()
-        // Groups is the home page after signing in; faculty and admins start on Review
-        if (location.pathname === '/') navigate(u.role === 'student' ? '/groups' : '/review')
       }}
     />
   )
+}
+
+// The landing page is only for visitors who are signed out; signed-in users go to their home page
+function Home(props) {
+  const { user, ready } = useAuth()
+  if (!ready) return null
+  if (user) return <Navigate to={homeFor(user)} replace />
+  return <Landing {...props} />
 }
 
 export default function App() {
@@ -65,7 +69,7 @@ export default function App() {
     <AuthProvider onOpenSignIn={openSignIn}>
       <ToastProvider>
         <Routes>
-          <Route path="/" element={<Landing theme={theme} onToggleTheme={toggleTheme} />} />
+          <Route path="/" element={<Home theme={theme} onToggleTheme={toggleTheme} />} />
           <Route element={<AppShell theme={theme} onToggleTheme={toggleTheme} />}>
             <Route path="/groups" element={<GroupsPage />} />
             <Route path="/groups/:id" element={<GroupDetail />} />

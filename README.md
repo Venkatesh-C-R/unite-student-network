@@ -62,6 +62,8 @@ When you pull new code later, run `npm run db:setup` in `backend/` once. It upda
 
 To sign in, use one of the emails below and the code you set as `DEMO_LOGIN_CODE` (`123456` if you followed the steps above). That fixed code only works for demo accounts, and it's switched off in production. Every other account gets a code by email. If `MAIL_PROVIDER` is set to `console`, the code is printed in the backend terminal instead.
 
+The landing page is only for visitors who aren't signed in. Once you sign in, students go to Unions and faculty and admins go to Review, and opening `/` takes you back there. Sign out to see the landing page again.
+
 | Email | Who it is |
 |---|---|
 | `26dm001@psgtech.ac.in` | Aarav, who leads Team Nova. This account has a join request waiting for approval and an open poll, and can submit claims. |
