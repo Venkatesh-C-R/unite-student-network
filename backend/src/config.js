@@ -51,7 +51,7 @@ export const config = {
   otp: { ttlMinutes: 10, maxAttempts: 5, resendSeconds: 60 },
   // Demo only: a fixed 6-digit code that signs in the seeded demo accounts. Never used in production.
   demoLoginCode: env === 'production' ? null : /^\d{6}$/.test(process.env.DEMO_LOGIN_CODE || '') ? process.env.DEMO_LOGIN_CODE : null,
-  demoEmail: /^(26dm\d{3}|demo\.faculty|demo\.admin)@psgtech\.ac\.in$/i,
+  demoEmail: /^(26dm\d{3}|demo\.faculty|demo\.hod|demo\.admin)@psgtech\.ac\.in$/i,
   uploads: {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxBytes: 5 * 1024 * 1024,

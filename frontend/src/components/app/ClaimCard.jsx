@@ -1,6 +1,6 @@
 import { BadgeCheck, Clock, FileText, Undo2, XCircle } from 'lucide-react'
 import { HOST_CATEGORIES } from '../../data'
-import { CATEGORY_ICON, claimRef, resultLabel } from '../../lib/claims'
+import { CATEGORY_ICON, claimRef, resultLabel, soloRef } from '../../lib/claims'
 import { formatPoints, timeAgo } from '../../lib/format'
 
 const STATUS = {
@@ -57,7 +57,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
     <article className="glass rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-xs font-semibold text-muted">{claimRef(claim.id)}</p>
+          <p className="font-mono text-xs font-semibold text-muted">{claim.solo ? soloRef(claim.id) : claimRef(claim.id)}</p>
           <h3 className="font-display text-lg font-semibold break-words">{claim.eventTitle}</h3>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
             <span className="inline-flex items-center gap-1">
@@ -80,6 +80,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
           </span>
         ))}
         {claim.groups.length > 1 && <span className="text-xs text-muted">· joint event team</span>}
+        {claim.solo && <span className="rounded-full border border-line px-3 py-1">Solo</span>}
       </div>
 
       {claim.description && <p className="mt-3 text-sm text-muted">{claim.description}</p>}
@@ -95,7 +96,7 @@ export default function ClaimCard({ claim, showSubmitter = false, children }) {
         </span>
         {claim.status === 'approved' && (
           <span className="font-semibold text-emerald-500">
-            +{formatPoints(claim.points)} pts {claim.groups.length > 1 ? 'to each union' : ''} · verified by {claim.reviewerName}
+            +{formatPoints(claim.points)} {claim.solo ? 'solo ' : ''}pts {claim.groups.length > 1 ? 'to each union' : ''} · verified by {claim.reviewerName}
           </span>
         )}
       </div>

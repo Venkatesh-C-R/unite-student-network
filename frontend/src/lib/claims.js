@@ -4,6 +4,8 @@ export const CATEGORY_ICON = { college: Building2, state: MapPin, national: Land
 
 // Public claim reference, e.g. CLM-0007. The review search accepts this form.
 export const claimRef = (id) => `CLM-${String(id).padStart(4, '0')}`
+// Solo claims use SOL-0007 instead
+export const soloRef = (id) => `SOL-${String(id).padStart(4, '0')}`
 
 export function resultLabel(result) {
   if (result === 'participation') return 'Participation'

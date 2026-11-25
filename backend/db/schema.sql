@@ -341,3 +341,72 @@ CREATE TABLE IF NOT EXISTS flyer_share (
   CONSTRAINT fk_share_group FOREIGN KEY (group_id) REFERENCES collab_group(id) ON DELETE CASCADE,
   CONSTRAINT fk_share_user FOREIGN KEY (shared_by) REFERENCES user_account(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+-- Solo claims: a student's own result at an event, verified by faculty like union claims.
+-- The points count only on the solo leaderboard, never towards a union.
+CREATE TABLE IF NOT EXISTS solo_claim (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  event_id      INT UNSIGNED NOT NULL,
+  student_id    INT UNSIGNED NOT NULL,
+  result        ENUM('1','2','3','4','5','6','7','8','9','10','participation') NOT NULL,
+  description   VARCHAR(500) NOT NULL DEFAULT '',
+  status        ENUM('pending','approved','rejected','withdrawn') NOT NULL DEFAULT 'pending',
+  reviewer_id   INT UNSIGNED NULL,                 -- NULL until reviewed
+  review_note   VARCHAR(500) NULL,
+  base_points   SMALLINT UNSIGNED NULL,            -- filled on approval
+  multiplier    DECIMAL(2,1) NULL,
+  points        DECIMAL(6,1) NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at   DATETIME NULL,
+  -- one live claim (pending or approved) per student per event: NULL for the others
+  live_key      TINYINT AS (IF(status IN ('pending','approved'), 1, NULL)) STORED,
+  UNIQUE KEY uq_solo_live (event_id, student_id, live_key),
+  INDEX ix_solo_status (status),
+  INDEX ix_solo_student (student_id, status),
+  CONSTRAINT fk_solo_event FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
+  CONSTRAINT fk_solo_student FOREIGN KEY (student_id) REFERENCES user_account(id) ON DELETE CASCADE,
+  CONSTRAINT fk_solo_reviewer FOREIGN KEY (reviewer_id) REFERENCES user_account(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS solo_evidence (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  claim_id       INT UNSIGNED NOT NULL,
+  stored_name    VARCHAR(80)  NOT NULL,           -- random name on disk
+  original_name  VARCHAR(200) NOT NULL,
+  mime_type      ENUM('application/pdf','image/png','image/jpeg') NOT NULL,
+  size_bytes     INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_solo_ev_claim FOREIGN KEY (claim_id) REFERENCES solo_claim(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- On-duty (OD) requests: a student uploads the OD letter and sends it to one or more faculty
+-- by email. Only those faculty can accept or reject it. It is approved once every one of them
+-- accepts; one rejection rejects it.
+CREATE TABLE IF NOT EXISTS od_request (
+  id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  student_id       INT UNSIGNED NOT NULL,
+  purpose          VARCHAR(150) NOT NULL,
+  from_date        DATE NOT NULL,
+  to_date          DATE NOT NULL,
+  letter_name      VARCHAR(80)  NOT NULL,         -- random name on disk
+  letter_original  VARCHAR(200) NOT NULL,
+  letter_type      ENUM('application/pdf','image/png','image/jpeg') NOT NULL,
+  letter_size      INT UNSIGNED NOT NULL,
+  status           ENUM('pending','approved','rejected','withdrawn') NOT NULL DEFAULT 'pending',
+  created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  decided_at       DATETIME NULL,                 -- when it was approved, rejected or withdrawn
+  INDEX ix_od_student (student_id),
+  CONSTRAINT fk_od_student FOREIGN KEY (student_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- The faculty an OD request was sent to, and each one's decision
+CREATE TABLE IF NOT EXISTS od_approver (
+  od_id       INT UNSIGNED NOT NULL,
+  faculty_id  INT UNSIGNED NOT NULL,
+  decision    ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  note        VARCHAR(300) NULL,
+  decided_at  DATETIME NULL,
+  PRIMARY KEY (od_id, faculty_id),
+  INDEX ix_od_faculty (faculty_id, decision),
+  CONSTRAINT fk_odapp_od FOREIGN KEY (od_id) REFERENCES od_request(id) ON DELETE CASCADE,
+  CONSTRAINT fk_odapp_faculty FOREIGN KEY (faculty_id) REFERENCES user_account(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

@@ -13,8 +13,10 @@ import { eventsRouter } from './routes/events.js'
 import { flyersRouter } from './routes/flyers.js'
 import { groupsRouter } from './routes/groups.js'
 import { invitesRouter } from './routes/invites.js'
+import { odRouter } from './routes/od.js'
 import { peopleRouter } from './routes/people.js'
 import { pollsRouter } from './routes/polls.js'
+import { soloRouter } from './routes/solo.js'
 
 export function createApp() {
   const app = express()
@@ -56,6 +58,8 @@ export function createApp() {
   app.use('/api/events', eventsRouter)
   app.use('/api/flyers', flyersRouter)
   app.use('/api', achievementsRouter)
+  app.use('/api', soloRouter)
+  app.use('/api/od', odRouter)
   app.use('/api/admin', adminRouter)
 
   app.use('/api', () => {

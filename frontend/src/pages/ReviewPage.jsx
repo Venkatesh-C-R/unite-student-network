@@ -1,13 +1,13 @@
 import { LayoutGroup, motion } from 'framer-motion'
-import { Check, ClipboardCheck, RotateCcw, Search, ShieldAlert, Undo2, X } from 'lucide-react'
+import { Check, ClipboardCheck, RotateCcw, Search, ShieldAlert, Undo2, User, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 import { api } from '../api'
 import ClaimCard from '../components/app/ClaimCard'
 import { Empty, Skeleton } from '../components/app/kit'
 import { useAuth, useToast } from '../context'
 import { HOST_CATEGORIES, POSITIONS } from '../data'
-import { CATEGORY_ICON, claimRef } from '../lib/claims'
+import { CATEGORY_ICON, claimRef, soloRef } from '../lib/claims'
 import { formatPoints } from '../lib/format'
 import { btn, input } from '../lib/styles'
 
@@ -16,6 +16,11 @@ const TABS = [
   ['approved', 'Verified'],
   ['rejected', 'Not approved'],
   ['withdrawn', 'Withdrawn'],
+]
+
+const KINDS = [
+  ['union', 'Union claims', Users],
+  ['solo', 'Solo claims', User],
 ]
 
 function baseFor(result) {
@@ -38,8 +43,12 @@ function ReviewForm({ claim, onDone }) {
       const body = { decision }
       if (note.trim()) body.note = note.trim()
       if (decision === 'approve' && category !== claim.hostCategory) body.hostCategory = category
-      await api(`/review/achievements/${claim.id}`, { method: 'POST', body })
-      toast(decision === 'approve' ? `Approved — ${formatPoints(points)} points awarded.` : 'Claim rejected. The students have been told why.')
+      await api(`${claim.solo ? '/review/solo-claims' : '/review/achievements'}/${claim.id}`, { method: 'POST', body })
+      toast(
+        decision === 'approve'
+          ? `Approved — ${formatPoints(points)} ${claim.solo ? 'solo ' : ''}points awarded.`
+          : `Claim rejected. The ${claim.solo ? 'student has' : 'students have'} been told why.`,
+      )
       onDone()
     } catch (e) {
       toast(e.message, 'error')
@@ -92,7 +101,7 @@ function ReviewForm({ claim, onDone }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">
           Approving awards <b>{formatPoints(points)} pts</b>
-          {claim.groups.length > 1 ? ` to each of ${claim.groups.length} unions` : ''}.
+          {claim.solo ? ' to the student on the solo leaderboard' : claim.groups.length > 1 ? ` to each of ${claim.groups.length} unions` : ''}.
         </p>
         <div className="flex gap-2">
           {rejecting ? (
@@ -179,21 +188,26 @@ export default function ReviewPage() {
   const toast = useToast()
   // /review/:id (the link in "review needed" notifications) opens that claim
   const { id: linkedId } = useParams()
+  // Solo-claim notifications link to /review?type=solo&q=SOL-…
+  const [params] = useSearchParams()
+  const [kind, setKind] = useState(params.get('type') === 'solo' ? 'solo' : 'union')
   const [tab, setTab] = useState('pending')
-  const [query, setQuery] = useState(linkedId ? claimRef(linkedId) : '')
+  const [query, setQuery] = useState(linkedId ? claimRef(linkedId) : params.get('q') || '')
   const [claims, setClaims] = useState(null)
   const [pendingCount, setPendingCount] = useState(null)
   const q = query.trim()
 
   // A search looks across every status; otherwise list the chosen tab
   const load = useCallback(() => {
-    api(q ? `/review/achievements?q=${encodeURIComponent(q)}` : `/review/achievements?status=${tab}`)
+    const base = kind === 'solo' ? '/review/solo-claims' : '/review/achievements'
+    api(q ? `${base}?q=${encodeURIComponent(q)}` : `${base}?status=${tab}`)
       .then((d) => {
-        setClaims(d.achievements)
-        if (!q && tab === 'pending') setPendingCount(d.achievements.length)
+        const list = d.claims || d.achievements
+        setClaims(list)
+        if (!q && tab === 'pending') setPendingCount(list.length)
       })
       .catch((e) => toast(e.message, 'error'))
-  }, [q, tab, toast])
+  }, [kind, q, tab, toast])
 
   useEffect(() => {
     if (user.role === 'student') return
@@ -215,9 +229,31 @@ export default function ReviewPage() {
           Review <span className="text-gradient">claims</span>
         </h1>
         <p className="mt-1 max-w-2xl text-muted">
-          Check each result against its proof. Approving adds the points to every union in the team; rejecting needs a short reason the students will see.
+          Check each result against its proof. Approving a union claim adds the points to every union in the team; a solo claim adds them to that student on the solo
+          leaderboard. Rejecting needs a short reason the students will see.
         </p>
       </section>
+
+      <div role="tablist" aria-label="Kind of claim" className="glass inline-flex rounded-full p-1">
+        {KINDS.map(([key, label, Icon]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={kind === key}
+            onClick={() => {
+              if (key === kind) return
+              setClaims(null)
+              setPendingCount(null)
+              setQuery('')
+              setTab('pending')
+              setKind(key)
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${kind === key ? 'bg-gradient-brand text-white' : 'text-muted hover:text-ink'}`}
+          >
+            <Icon size={15} /> {label}
+          </button>
+        ))}
+      </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <LayoutGroup id="review-tabs">
@@ -253,7 +289,7 @@ export default function ReviewPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Claim ID (CLM-0007), student or event"
+            placeholder={`Claim ID (${kind === 'solo' ? soloRef(7) : claimRef(7)}), student or event`}
             className={`${input} py-2.5 pl-11`}
           />
         </label>
@@ -264,7 +300,7 @@ export default function ReviewPage() {
       ) : claims.length === 0 ? (
         q ? (
           <Empty icon={Search} title="No claims match">
-            Check the claim ID, for example CLM-0007, or search by student or event.
+            Check the claim ID, for example {kind === 'solo' ? soloRef(7) : claimRef(7)}, or search by student or event.
           </Empty>
         ) : (
           <Empty icon={ClipboardCheck} title={tab === 'pending' ? 'All caught up' : 'Nothing here yet'}>
@@ -276,7 +312,7 @@ export default function ReviewPage() {
           {claims.map((c) => (
             <ClaimCard key={c.id} claim={c} showSubmitter>
               {c.status === 'pending' && c.submitterId !== user.id && <ReviewForm claim={c} onDone={load} />}
-              {user.role === 'admin' && c.status !== 'withdrawn' && <AdminRevert claim={c} onDone={load} />}
+              {user.role === 'admin' && !c.solo && c.status !== 'withdrawn' && <AdminRevert claim={c} onDone={load} />}
             </ClaimCard>
           ))}
         </div>
