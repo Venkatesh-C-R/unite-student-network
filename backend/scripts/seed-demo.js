@@ -3,7 +3,7 @@
 // Usage: npm run seed:demo
 //
 // Demo sign-in (development only): 26dm001@psgtech.ac.in … 26dm012@psgtech.ac.in
-// demo.faculty@psgtech.ac.in and demo.admin@psgtech.ac.in. Sign in with the code from DEMO_LOGIN_CODE in .env,
+// demo.faculty@psgtech.ac.in, demo.hod@psgtech.ac.in and demo.admin@psgtech.ac.in. Sign in with the code from DEMO_LOGIN_CODE in .env,
 // or the emailed code (printed in the backend terminal in development).
 import { randomBytes } from 'node:crypto'
 import { readdir, unlink, writeFile } from 'node:fs/promises'
@@ -61,7 +61,7 @@ const STUDENTS = [
 
 await withTransaction(async (conn) => {
   // Remove earlier demo data (groups are removed through their demo owners below)
-  const [old] = await conn.query(`SELECT id FROM user_account WHERE email LIKE '26dm%@psgtech.ac.in' OR email IN ('demo.faculty@psgtech.ac.in', 'demo.admin@psgtech.ac.in')`)
+  const [old] = await conn.query(`SELECT id FROM user_account WHERE email LIKE '26dm%@psgtech.ac.in' OR email IN ('demo.faculty@psgtech.ac.in', 'demo.hod@psgtech.ac.in', 'demo.admin@psgtech.ac.in')`)
   if (old.length) {
     const ids = old.map((u) => u.id)
     await conn.query('DELETE FROM collab_group WHERE creator_id IN (?)', [ids])
@@ -82,6 +82,7 @@ await withTransaction(async (conn) => {
   const [fac] = await conn.query(
     `INSERT INTO user_account (email, name, role) VALUES ('demo.faculty@psgtech.ac.in', 'Demo Faculty', 'faculty')`,
   )
+  const [hod] = await conn.query(`INSERT INTO user_account (email, name, role) VALUES ('demo.hod@psgtech.ac.in', 'Demo HOD', 'faculty')`)
   await conn.query(`INSERT INTO user_account (email, name, role) VALUES ('demo.admin@psgtech.ac.in', 'Demo Admin', 'admin')`)
   const S = (n) => ids[n - 1]
 
@@ -192,6 +193,68 @@ await withTransaction(async (conn) => {
     'Presented to Circuit Breakers',
     'This is sample data for trying UNITE.',
   ])
+
+  // A demo PDF saved in uploads; returns [stored name, size]
+  async function savePdf(lines) {
+    const pdf = demoPdf(lines)
+    const stored = `demo-${randomBytes(8).toString('hex')}.pdf`
+    await writeFile(path.join(uploadDir, stored), pdf)
+    return [stored, pdf.length]
+  }
+
+  // Solo results: verified ones fill the solo leaderboard, pending ones wait in Review
+  async function solo(studentN, title, host, category, result, approved) {
+    const [e] = await conn.query('INSERT INTO event (title, host_institution, host_category, event_date, created_by) VALUES (?, ?, ?, CURDATE() - INTERVAL 12 DAY, ?)', [
+      title,
+      host,
+      category,
+      S(studentN),
+    ])
+    const sc = scoreFor(result, category)
+    const [c] = approved
+      ? await conn.query(
+          `INSERT INTO solo_claim (event_id, student_id, result, status, reviewer_id, base_points, multiplier, points, reviewed_at)
+           VALUES (?, ?, ?, 'approved', ?, ?, ?, ?, NOW())`,
+          [e.insertId, S(studentN), result, fac.insertId, sc.base, sc.multiplier, sc.points],
+        )
+      : await conn.query('INSERT INTO solo_claim (event_id, student_id, result, description) VALUES (?, ?, ?, ?)', [
+          e.insertId,
+          S(studentN),
+          result,
+          'Demo solo claim — certificate attached.',
+        ])
+    const [stored, size] = await savePdf([`Certificate (DEMO)`, `${title} - ${host}`, `Awarded to ${STUDENTS[studentN - 1][0]}`, 'This is sample data for trying UNITE.'])
+    await conn.query('INSERT INTO solo_evidence (claim_id, stored_name, original_name, mime_type, size_bytes) VALUES (?, ?, ?, ?, ?)', [
+      c.insertId,
+      stored,
+      'certificate.pdf',
+      'application/pdf',
+      size,
+    ])
+  }
+  await solo(1, 'State Coding Olympiad (demo)', 'Anna University', 'state', '1', true)
+  await solo(4, 'National UI Design Sprint (demo)', 'IIT Bombay', 'national', '2', true)
+  await solo(5, 'Data Science Quiz (demo)', 'Another College', 'state', '3', true)
+  await solo(7, 'PSG Circuit Debugging (demo)', 'PSG College of Technology', 'college', 'participation', true)
+  await solo(1, 'PSG Tech Quiz (demo)', 'PSG College of Technology', 'college', '2', false)
+  await solo(2, 'National Fashion Design Challenge (demo)', 'NIFT Chennai', 'national', '1', false)
+
+  // OD requests: Aarav's is waiting for Demo Faculty and Demo HOD; Meera's waits for Demo Faculty;
+  // Aarav also has one both approved earlier
+  async function od(studentN, purpose, fromIn, toIn, approverIds, decided = null) {
+    const [stored, size] = await savePdf(['OD Request (DEMO)', `From: ${STUDENTS[studentN - 1][0]}`, purpose, 'This is sample data for trying UNITE.'])
+    const [o] = await conn.query(
+      `INSERT INTO od_request (student_id, purpose, from_date, to_date, letter_name, letter_original, letter_type, letter_size, status, decided_at)
+       VALUES (?, ?, CURDATE() + INTERVAL ? DAY, CURDATE() + INTERVAL ? DAY, ?, 'od-letter.pdf', 'application/pdf', ?, ?, ?)`,
+      [S(studentN), purpose, fromIn, toIn, stored, size, decided ? 'approved' : 'pending', decided ? new Date() : null],
+    )
+    await conn.query('INSERT INTO od_approver (od_id, faculty_id, decision, note, decided_at) VALUES ?', [
+      approverIds.map((f) => [o.insertId, f, decided ? 'approved' : 'pending', decided, decided ? new Date() : null]),
+    ])
+  }
+  await od(1, 'Smart India Hackathon finals at IIT Madras (demo)', 7, 8, [fac.insertId, hod.insertId])
+  await od(4, 'National UI Design Sprint at IIT Bombay (demo)', 10, 10, [fac.insertId])
+  await od(1, 'Inter-college IoT workshop (demo)', -14, -13, [fac.insertId, hod.insertId], 'All the best!')
 })
 
 console.log('Demo data ready. Sign in as 26dm001@psgtech.ac.in (owner of Team Nova) with the DEMO_LOGIN_CODE from .env.')

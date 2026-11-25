@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Award, CalendarPlus, Check, ChevronRight, FileUp, Plus, Search, Users, X } from 'lucide-react'
+import { Award, CalendarPlus, Check, ChevronRight, FileUp, Plus, Search, User, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api } from '../api'
 import ClaimCard from '../components/app/ClaimCard'
 import { Dialog, Empty, Skeleton } from '../components/app/kit'
@@ -16,10 +16,10 @@ const MAX_FILES = 5
 const MAX_BYTES = 5 * 1024 * 1024
 const TYPES = ['application/pdf', 'image/png', 'image/jpeg']
 
-function Steps({ step }) {
+function Steps({ step, labels }) {
   return (
     <ol className="mb-6 flex items-center gap-2 text-xs font-semibold">
-      {['Event', 'Team', 'Result & proof'].map((label, i) => (
+      {labels.map((label, i) => (
         <li key={label} className="flex items-center gap-2">
           <span
             className={`grid h-6 w-6 place-items-center rounded-full ${i + 1 < step ? 'bg-emerald-500 text-white' : i + 1 === step ? 'bg-gradient-brand text-white' : 'border border-line text-muted'}`}
@@ -27,7 +27,7 @@ function Steps({ step }) {
             {i + 1 < step ? <Check size={13} /> : i + 1}
           </span>
           <span className={i + 1 === step ? '' : 'text-muted'}>{label}</span>
-          {i < 2 && <ChevronRight size={14} className="text-muted" />}
+          {i < labels.length - 1 && <ChevronRight size={14} className="text-muted" />}
         </li>
       ))}
     </ol>
@@ -312,7 +312,7 @@ function TeamStep({ event, myGroups, onPick, onBack }) {
   )
 }
 
-// ---------- Step 3: result and evidence ----------
+// ---------- Last step: result and evidence. Without a team it is a solo claim. ----------
 function ResultStep({ event, team, onBack, onSubmitted }) {
   const [result, setResult] = useState('')
   const [description, setDescription] = useState('')
@@ -341,12 +341,13 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
     setError('')
     try {
       const form = new FormData()
-      form.append('teamId', String(team.id))
+      if (team) form.append('teamId', String(team.id))
+      else form.append('eventId', String(event.id))
       form.append('result', result)
       form.append('description', description)
       files.forEach((f) => form.append('evidence', f))
-      const { achievement } = await api('/achievements', { method: 'POST', body: form })
-      onSubmitted(achievement)
+      const data = await api(team ? '/achievements' : '/solo-claims', { method: 'POST', body: form })
+      onSubmitted(data.achievement || data.claim)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -357,7 +358,14 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
   return (
     <div className="space-y-4">
       <p className="rounded-2xl bg-violet-500/10 px-4 py-3 text-sm">
-        <b>{event.title}</b> · team <b>{team.label}</b> ({team.groups.map((g) => g.name).join(' + ')})
+        <b>{event.title}</b> ·{' '}
+        {team ? (
+          <>
+            team <b>{team.label}</b> ({team.groups.map((g) => g.name).join(' + ')})
+          </>
+        ) : (
+          <>{event.hostInstitution} · solo claim</>
+        )}
       </p>
       <div>
         <label htmlFor="res" className="mb-1.5 block text-sm font-semibold">
@@ -425,7 +433,7 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
       {base !== undefined && (
         <p className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
           If approved: <b>{formatPoints(base * multiplier)} points</b> ({base} × {multiplier.toFixed(1)})
-          {team.groups.length > 1 ? ' to each union in the team' : ''}.
+          {!team ? ' on the solo leaderboard' : team.groups.length > 1 ? ' to each union in the team' : ''}.
         </p>
       )}
       {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
@@ -441,8 +449,10 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
   )
 }
 
-function SubmitClaimDialog({ open, onClose, myGroups, onSubmitted }) {
+// Union claims go Event → Team → Result; solo claims skip the team step
+function SubmitClaimDialog({ open, onClose, myGroups, onSubmitted, solo = false }) {
   const [step, setStep] = useState(1)
+  const resultStep = solo ? 2 : 3
   const [event, setEvent] = useState(null)
   const [team, setTeam] = useState(null)
 
@@ -454,8 +464,8 @@ function SubmitClaimDialog({ open, onClose, myGroups, onSubmitted }) {
   }
 
   return (
-    <Dialog open={open} onClose={close} title="Submit a result" wide>
-      <Steps step={step} />
+    <Dialog open={open} onClose={close} title={solo ? 'Submit a solo result' : 'Submit a result'}>
+      <Steps step={step} labels={solo ? ['Event', 'Result & proof'] : ['Event', 'Team', 'Result & proof']} />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.18 }}>
           {step === 1 && (
@@ -466,7 +476,7 @@ function SubmitClaimDialog({ open, onClose, myGroups, onSubmitted }) {
               }}
             />
           )}
-          {step === 2 && (
+          {step === 2 && !solo && (
             <TeamStep
               event={event}
               myGroups={myGroups}
@@ -477,11 +487,11 @@ function SubmitClaimDialog({ open, onClose, myGroups, onSubmitted }) {
               }}
             />
           )}
-          {step === 3 && (
+          {step === resultStep && (
             <ResultStep
               event={event}
-              team={team}
-              onBack={() => setStep(2)}
+              team={solo ? null : team}
+              onBack={() => setStep(resultStep - 1)}
               onSubmitted={(a) => {
                 onSubmitted(a)
                 close()
@@ -503,17 +513,29 @@ const FILTERS = [
   ['withdrawn', 'Withdrawn'],
 ]
 
+const KINDS = [
+  ['union', 'Union claims', Users],
+  ['solo', 'Solo claims', User],
+]
+
 export default function ClaimsPage() {
   const { user } = useAuth()
   const toast = useToast()
-  const [claims, setClaims] = useState(null)
+  // ?type=solo (used by solo-claim notifications) opens the solo list
+  const [params, setParams] = useSearchParams()
+  const kind = params.get('type') === 'solo' ? 'solo' : 'union'
+  const [unionClaims, setUnionClaims] = useState(null)
+  const [soloClaims, setSoloClaims] = useState(null)
   const [myGroups, setMyGroups] = useState([])
   const [filter, setFilter] = useState('all')
   const [open, setOpen] = useState(false)
 
   const load = useCallback(() => {
     api('/achievements/mine')
-      .then((d) => setClaims(d.achievements))
+      .then((d) => setUnionClaims(d.achievements))
+      .catch((e) => toast(e.message, 'error'))
+    api('/solo-claims/mine')
+      .then((d) => setSoloClaims(d.claims))
       .catch((e) => toast(e.message, 'error'))
     api('/groups/mine')
       .then((d) => setMyGroups(d.groups))
@@ -521,8 +543,8 @@ export default function ClaimsPage() {
   }, [toast])
 
   useEffect(() => {
-    load()
-  }, [load])
+    if (user.role === 'student') load()
+  }, [load, user.role])
 
   if (user.role !== 'student')
     return (
@@ -531,24 +553,47 @@ export default function ClaimsPage() {
       </Empty>
     )
 
-  const isLeader = myGroups.some((g) => g.myRole === 'owner')
+  const solo = kind === 'solo'
+  const claims = solo ? soloClaims : unionClaims
+  const canSubmit = solo || myGroups.some((g) => g.myRole === 'owner')
   const shown = (claims || []).filter((c) => filter === 'all' || c.status === filter)
   const count = (s) => (claims || []).filter((c) => c.status === s).length
 
   return (
     <div className="space-y-8">
+      <div role="tablist" aria-label="Kind of claim" className="glass inline-flex rounded-full p-1">
+        {KINDS.map(([key, label, Icon]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={kind === key}
+            onClick={() => {
+              setFilter('all')
+              setParams(key === 'solo' ? { type: 'solo' } : {}, { replace: true })
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${kind === key ? 'bg-gradient-brand text-white' : 'text-muted hover:text-ink'}`}
+          >
+            <Icon size={15} /> {label}
+          </button>
+        ))}
+      </div>
+
       <section className="glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
         <div className="bg-gradient-brand pointer-events-none absolute -right-20 -bottom-24 h-64 w-64 rounded-full opacity-25 blur-3xl" />
         <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <h1 className="font-display text-3xl font-bold sm:text-4xl">
-              Your <span className="text-gradient">achievements</span>
+              {solo ? 'Your solo' : 'Your'} <span className="text-gradient">achievements</span>
             </h1>
-            <p className="mt-1 max-w-xl text-muted">Won or took part in an event with your union? Submit the result with proof. Faculty verify it, then your union earns the points.</p>
+            <p className="mt-1 max-w-xl text-muted">
+              {solo
+                ? 'Took part in an event on your own? Submit your result with proof. Once faculty verify it, the points count for you on the solo leaderboard.'
+                : 'Won or took part in an event with your union? Submit the result with proof. Faculty verify it, then your union earns the points.'}
+            </p>
           </div>
-          {isLeader ? (
+          {canSubmit ? (
             <button onClick={() => setOpen(true)} className={btn.primary}>
-              <Plus size={17} /> Submit a result
+              <Plus size={17} /> {solo ? 'Submit a solo result' : 'Submit a result'}
             </button>
           ) : (
             <p className="max-w-56 text-sm text-muted">Only your union leader can submit a result for approval.</p>
@@ -568,7 +613,7 @@ export default function ClaimsPage() {
         </dl>
       </section>
 
-      <div className="flex flex-wrap gap-2" role="tablist">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Status">
         {FILTERS.map(([key, label]) => (
           <button
             key={key}
@@ -586,27 +631,30 @@ export default function ClaimsPage() {
         <Skeleton className="h-48" />
       ) : shown.length === 0 ? (
         <Empty
-          icon={Award}
-          title={claims.length ? 'Nothing in this list' : 'No results submitted yet'}
+          icon={solo ? User : Award}
+          title={claims.length ? 'Nothing in this list' : solo ? 'No solo results yet' : 'No results submitted yet'}
           action={
-            !claims.length && (
+            !claims.length &&
+            canSubmit && (
               <button onClick={() => setOpen(true)} className={btn.primary}>
-                <Plus size={17} /> Submit your first result
+                <Plus size={17} /> Submit your first {solo ? 'solo ' : ''}result
               </button>
             )
           }
         >
-          {claims.length ? 'Try another filter.' : 'Results your unions submit appear here, with their review status.'}
+          {claims.length ? 'Try another filter.' : solo ? 'Results you submit on your own appear here, with their review status.' : 'Results your unions submit appear here, with their review status.'}
         </Empty>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {shown.map((c) => (
-            <ClaimCard key={c.id} claim={c} showSubmitter />
+            <ClaimCard key={c.id} claim={c} showSubmitter={!solo} />
           ))}
         </div>
       )}
 
       <SubmitClaimDialog
+        key={kind}
+        solo={solo}
         open={open}
         onClose={() => setOpen(false)}
         myGroups={myGroups.filter((g) => g.myRole === 'owner')}

@@ -13,7 +13,7 @@ npm run lint    # oxlint
 
 ## Where things are
 
-- `src/pages/`: one file per screen (landing page, unions, claims, flyers, leaderboard, review, admin). The landing page is shown only when signed out; `src/App.jsx` sends signed-in users to their home page.
+- `src/pages/`: one file per screen (landing page, unions, claims, OD requests, flyers, leaderboard, review, admin). Claims, Review and Leaderboard each switch between union and solo with `?type=solo`. The landing page is shown only when signed out; `src/App.jsx` sends signed-in users to their home page.
 - `src/components/`: landing-page sections; `src/components/app/` holds the parts shared by the signed-in screens
 - `src/lib/`: small helpers (button styles, formatting, programme labels)
 - `src/api.js`: the one function that talks to the API

@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { BadgeCheck, Crown, Medal, Trophy, Users } from 'lucide-react'
+import { BadgeCheck, Crown, Medal, Trophy, User, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api } from '../api'
-import { Empty, Skeleton, SlotDots } from '../components/app/kit'
-import { useToast } from '../context'
+import { Empty, ProgrammeChip, Skeleton, SlotDots } from '../components/app/kit'
+import { useAuth, useToast } from '../context'
 import { HOST_CATEGORIES, POSITIONS } from '../data'
 import { formatPoints } from '../lib/format'
 import { btn } from '../lib/styles'
@@ -16,7 +16,7 @@ const PODIUM = [
   { place: 3, height: 'h-20', tint: 'from-orange-300 to-orange-600', delay: 0.3 },
 ]
 
-function Podium({ rows, mine }) {
+function Podium({ rows, mine, linkTo }) {
   const top = rows.slice(0, 3)
   return (
     <div className="grid grid-cols-3 items-end gap-3 sm:gap-6">
@@ -32,7 +32,7 @@ function Podium({ rows, mine }) {
             className="flex min-w-0 flex-col items-center text-center"
           >
             {place === 1 && <Crown size={28} className="mb-1 text-amber-400" />}
-            <Link to={`/groups/${g.id}`} className="w-full min-w-0 truncate font-display text-sm font-semibold hover:underline sm:text-lg">
+            <Link to={linkTo(g)} className="w-full min-w-0 truncate font-display text-sm font-semibold hover:underline sm:text-lg">
               {g.name}
             </Link>
             <p className="text-gradient font-display text-xl font-bold sm:text-3xl">{formatPoints(g.points)}</p>
@@ -53,19 +53,36 @@ function Podium({ rows, mine }) {
   )
 }
 
+const KINDS = [
+  ['union', 'Unions', Users],
+  ['solo', 'Solo', User],
+]
+
 export default function LeaderboardPage() {
   const toast = useToast()
-  const [rows, setRows] = useState(null)
-  const [mine, setMine] = useState(new Set())
+  const { user } = useAuth()
+  // ?type=solo shows students ranked by their own verified points
+  const [params, setParams] = useSearchParams()
+  const solo = params.get('type') === 'solo'
+  const [unionRows, setUnionRows] = useState(null)
+  const [soloRows, setSoloRows] = useState(null)
+  const [myUnions, setMyUnions] = useState(new Set())
 
   useEffect(() => {
     api('/leaderboard')
-      .then((d) => setRows(d.leaderboard))
+      .then((d) => setUnionRows(d.leaderboard))
+      .catch((e) => toast(e.message, 'error'))
+    api('/solo-leaderboard')
+      .then((d) => setSoloRows(d.leaderboard))
       .catch((e) => toast(e.message, 'error'))
     api('/groups/mine')
-      .then((d) => setMine(new Set(d.groups.map((g) => g.id))))
+      .then((d) => setMyUnions(new Set(d.groups.map((g) => g.id))))
       .catch(() => {})
   }, [toast])
+
+  const rows = solo ? soloRows : unionRows
+  const mine = solo ? new Set([user.id]) : myUnions
+  const linkTo = (r) => (solo ? `/students/${r.id}` : `/groups/${r.id}`)
 
   const max = Math.max(1, ...(rows || []).map((r) => Number(r.points)))
   const ranked = (rows || []).filter((r) => Number(r.points) > 0)
@@ -75,24 +92,59 @@ export default function LeaderboardPage() {
     <div className="space-y-10">
       <section className="text-center">
         <span className="glass mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold tracking-widest text-violet-600 uppercase dark:text-violet-300">
-          <Trophy size={14} /> Union leaderboard
+          <Trophy size={14} /> {solo ? 'Solo leaderboard' : 'Union leaderboard'}
         </span>
         <h1 className="font-display text-3xl font-bold sm:text-5xl">
-          Teams that <span className="text-gradient">win together</span>
+          {solo ? (
+            <>
+              Students who <span className="text-gradient">stand out</span>
+            </>
+          ) : (
+            <>
+              Teams that <span className="text-gradient">win together</span>
+            </>
+          )}
         </h1>
-        <p className="mx-auto mt-2 max-w-xl text-muted">Unions are ranked by verified points. Only results approved by faculty count.</p>
+        <p className="mx-auto mt-2 max-w-xl text-muted">
+          {solo
+            ? 'Students are ranked by the verified points of events they took part in on their own. These points do not count for unions.'
+            : 'Unions are ranked by verified points. Only results approved by faculty count.'}
+        </p>
+        <div role="tablist" aria-label="Leaderboard" className="glass mt-5 inline-flex rounded-full p-1">
+          {KINDS.map(([key, label, Icon]) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={(key === 'solo') === solo}
+              onClick={() => setParams(key === 'solo' ? { type: 'solo' } : {}, { replace: true })}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${(key === 'solo') === solo ? 'bg-gradient-brand text-white' : 'text-muted hover:text-ink'}`}
+            >
+              <Icon size={15} /> {label}
+            </button>
+          ))}
+        </div>
       </section>
 
       {!rows ? (
         <Skeleton className="h-72" />
       ) : ranked.length === 0 ? (
-        <Empty icon={Trophy} title="No verified points yet" action={<Link to="/claims" className={btn.primary}>Submit a result</Link>}>
-          Once faculty approve a union’s first result, it appears here.
+        <Empty
+          icon={Trophy}
+          title="No verified points yet"
+          action={
+            user.role === 'student' && (
+              <Link to={solo ? '/claims?type=solo' : '/claims'} className={btn.primary}>
+                {solo ? 'Submit a solo result' : 'Submit a result'}
+              </Link>
+            )
+          }
+        >
+          {solo ? 'Once faculty approve a student’s first solo result, they appear here.' : 'Once faculty approve a union’s first result, it appears here.'}
         </Empty>
       ) : (
         <>
           <section className="glass rounded-[2rem] px-4 pt-8 sm:px-10">
-            <Podium rows={ranked} mine={mine} />
+            <Podium rows={ranked} mine={mine} linkTo={linkTo} />
           </section>
 
           <section aria-labelledby="rank-h">
@@ -111,7 +163,7 @@ export default function LeaderboardPage() {
                     transition={{ delay: Math.min(i, 10) * 0.04 }}
                   >
                     <Link
-                      to={`/groups/${g.id}`}
+                      to={linkTo(g)}
                       className={`glass flex items-center gap-4 rounded-2xl p-4 transition hover:border-violet-400/60 ${isMine ? 'border-violet-400/70 shadow-[0_0_0_1px_rgba(139,92,246,0.5)]' : ''}`}
                     >
                       <span
@@ -124,12 +176,16 @@ export default function LeaderboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-2 truncate font-semibold">
                           {g.name}
-                          {isMine && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-500">Your union</span>}
+                          {isMine && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-500">{solo ? 'You' : 'Your union'}</span>}
                         </p>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-muted">
-                          <span className="flex items-center gap-1.5">
-                            <SlotDots count={g.memberCount} size={7} /> {g.memberCount}/6
-                          </span>
+                        <div className="mt-1 flex min-w-0 items-center gap-3 text-xs text-muted">
+                          {solo ? (
+                            g.programmeId && <ProgrammeChip id={g.programmeId} level={g.programmeLevel} name={g.programmeName} />
+                          ) : (
+                            <span className="flex items-center gap-1.5">
+                              <SlotDots count={g.memberCount} size={7} /> {g.memberCount}/6
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <BadgeCheck size={13} /> {g.wins} verified
                           </span>
@@ -165,7 +221,8 @@ export default function LeaderboardPage() {
       <section className="glass rounded-3xl p-6">
         <h2 className="font-display text-lg font-semibold">How points work</h2>
         <p className="mt-1 text-sm text-muted">
-          Base points by result, multiplied by who hosted the event. When unions enter an event together, every union in the team receives the full points.
+          Base points by result, multiplied by who hosted the event. When unions enter an event together, every union in the team receives the full points. Solo
+          results use the same table.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[28rem] text-sm">

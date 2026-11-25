@@ -10,11 +10,11 @@ cp .env.example .env           # then fill it in (see Settings below)
 npm install
 npm run db:setup               # creates tables, loads the 44 programmes, upgrades an older database (safe to re-run)
 npm run dev                    # http://localhost:4000, restarts on file changes
-npm test                       # 45 integration tests against the unite_test database (.env.test)
-npm run seed:demo              # optional: demo students, groups, a poll and points (dev database only)
+npm test                       # 49 integration tests against the unite_test database (.env.test)
+npm run seed:demo              # optional: demo students, groups, a poll, points, solo claims and OD requests (dev database only)
 ```
 
-Demo sign-in after `seed:demo` (development only): `26dm001@psgtech.ac.in` (owner of Team Nova) through `26dm012@psgtech.ac.in`, `demo.faculty@psgtech.ac.in` and `demo.admin@psgtech.ac.in`; they sign in with the fixed code set in `DEMO_LOGIN_CODE` (ignored in production). The demo includes three verified wins, a pending join request for Team Nova, a poll, and two pending claims (one from a joint team of two groups) for the faculty account to review, and three open reports for the admin console. Re-running the command resets all demo data, including its `uploads/demo-*.pdf` certificates.
+Demo sign-in after `seed:demo` (development only): `26dm001@psgtech.ac.in` (owner of Team Nova) through `26dm012@psgtech.ac.in`, `demo.faculty@psgtech.ac.in`, `demo.hod@psgtech.ac.in` (a second faculty account) and `demo.admin@psgtech.ac.in`; they sign in with the fixed code set in `DEMO_LOGIN_CODE` (ignored in production). The demo includes three verified wins, a pending join request for Team Nova, a poll, and two pending claims (one from a joint team of two groups) for the faculty account to review, four verified and two pending solo claims, three OD requests (one waiting for both Demo Faculty and Demo HOD, one waiting for Demo Faculty, one approved) and three open reports for the admin console. Re-running the command resets all demo data, including its `uploads/demo-*.pdf` certificates and letters.
 
 The frontend dev server (`frontend/`, port 5173) proxies `/api` to this server.
 
@@ -60,7 +60,9 @@ Copy `.env.example` to `.env` (and to `.env.test` with `DB_NAME=unite_test` for 
 | Below 10th | Submit as “participation” | `src/routes/achievements.js` |
 | Host category | Student picks; reviewer can correct it when approving | `src/routes/achievements.js` |
 | Evidence | 1–5 files, PDF/PNG/JPG, ≤ 5 MB each, content checked; visible to submitter, team groups and reviewers | `src/lib/uploads.js` |
-| Roles | `student`, `faculty` (reviews claims), `admin` (reviews, reports, roles, suspensions) | `src/middleware/auth.js` |
+| Solo claims | A student claims their own result at an event with 1–5 proof files; faculty or admins verify it with the same scoring table; one pending or verified solo claim per student per event; the points count only on the solo leaderboard, never for a union | `src/routes/solo.js` |
+| OD requests | A student uploads the OD letter (one PDF/PNG/JPG, required), gives the purpose and dates (at most 30 days) and sends it to 1–5 faculty by email; each email must belong to a faculty account. Only those faculty see it and decide; it is approved when all of them accept, and one rejection (with a reason) rejects it. The student can withdraw it while it is waiting | `src/routes/od.js` |
+| Roles | `student`, `faculty` (reviews claims, decides OD requests sent to them), `admin` (reviews, reports, roles, suspensions) | `src/middleware/auth.js` |
 | Role changes | A student in any group cannot be made faculty/admin until they leave their groups (groups are students-only) | `src/routes/admin.js` |
 | Suspension | Suspended users are signed out on their next request and cannot sign in; their data and group places are kept | `src/routes/admin.js` |
 
@@ -77,14 +79,16 @@ All paths start with `/api`. Send `X-UNITE: 1` on every non-GET request.
 - **Polls:** `GET/POST /groups/:id/polls`, `POST /polls/:id/vote`
 - **Events:** `GET/POST /events`, `GET /events/:id`, `POST /events/:id/teams`, `POST /events/:id/teams/:teamId/groups`
 - **Achievements:** `POST /achievements` (multipart, field `evidence`), `GET /achievements/mine`, `GET /evidence/:id`
-- **Review (faculty/admin):** `GET /review/achievements?status=`, `POST /review/achievements/:id`
-- **Leaderboard:** `GET /leaderboard`
+- **Solo claims:** `POST /solo-claims` (multipart, field `evidence`), `GET /solo-claims/mine`, `GET /solo-evidence/:id`
+- **Review (faculty/admin):** `GET /review/achievements?status=&q=`, `POST /review/achievements/:id`, `GET /review/solo-claims?status=&q=`, `POST /review/solo-claims/:id`
+- **Leaderboards:** `GET /leaderboard` (unions), `GET /solo-leaderboard` (students)
+- **OD requests:** `POST /od` (multipart, field `letter`), `GET /od/mine`, `GET /od/inbox?view=waiting|done` (faculty), `POST /od/:id/decision`, `POST /od/:id/withdraw`, `GET /od/:id/letter`
 - **Flyers:** `GET /flyers?before=`, `GET /flyers/shared`, `POST /flyers` (multipart, field `image`), `GET /flyers/:id`, `GET /flyers/:id/image`, `POST/DELETE /flyers/:id/like`, `POST /flyers/:id/comments`, `DELETE /flyers/:id/comments/:commentId`, `POST /flyers/:id/share`, `DELETE /flyers/:id`
 - **Notifications:** `GET /notifications`, `POST /notifications/read`
 - **Admin:** `GET /admin/stats`, `GET /admin/reports?status=`, `POST /admin/reports/:id/resolve`, `GET /admin/users?q=&role=&status=`, `POST /admin/users/:id/role`, `POST /admin/users/:id/active`, `GET /admin/activity?q=`, `POST /admin/claims/:id/reopen|withdraw`, `POST /admin/activity/:id/restore-member`
 
 ## Database
 
-`db/schema.sql` maps the design document's eight tables (PROGRAMME, STUDENT → `user_account`, COLLAB_GROUP, GROUP_MEMBER, EVENT, EVENT_TEAM, TEAM_GROUP, ACHIEVEMENT) and adds the supporting tables the report diagram leaves out (OTP, interests, links, friends, blocks, reports, join requests, invites, polls, evidence, points ledger, notifications, activity log, and the flyer, like, comment and share tables). Sessions are kept in a `sessions` table created by the session store.
+`db/schema.sql` maps the design document's eight tables (PROGRAMME, STUDENT → `user_account`, COLLAB_GROUP, GROUP_MEMBER, EVENT, EVENT_TEAM, TEAM_GROUP, ACHIEVEMENT) and adds the supporting tables the report diagram leaves out (OTP, interests, links, friends, blocks, reports, join requests, invites, polls, evidence, points ledger, notifications, activity log, the flyer, like, comment and share tables, solo claims with their evidence, and OD requests with the faculty each was sent to). Sessions are kept in a `sessions` table created by the session store.
 
 Columns are sized to the data to save space: emails are `VARCHAR(30)` and roll numbers `VARCHAR(10)` in the 1-byte `ascii` character set, the sign-in code hash is `BINARY(32)`, file types are ENUMs, and `activity_log.id` is `INT UNSIGNED`. `npm run db:setup` upgrades older databases to these types.

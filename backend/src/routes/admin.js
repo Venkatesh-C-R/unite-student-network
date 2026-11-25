@@ -18,7 +18,7 @@ adminRouter.get('/stats', async (req, res) => {
             (SELECT COUNT(*) FROM user_account WHERE role = 'student' AND is_active) AS students,
             (SELECT COUNT(*) FROM user_account WHERE role IN ('faculty','admin') AND is_active) AS staff,
             (SELECT COUNT(*) FROM user_account WHERE NOT is_active) AS suspended,
-            (SELECT COUNT(*) FROM achievement WHERE status = 'pending') AS pendingClaims,
+            (SELECT COUNT(*) FROM achievement WHERE status = 'pending') + (SELECT COUNT(*) FROM solo_claim WHERE status = 'pending') AS pendingClaims,
             (SELECT COUNT(*) FROM collab_group) AS groupCount`, // not "groups": reserved word in MySQL 8
   )
   res.json({ stats })

@@ -14,6 +14,7 @@ import GroupDetail from './pages/GroupDetail'
 import GroupsPage from './pages/GroupsPage'
 import Landing from './pages/Landing'
 import LeaderboardPage from './pages/LeaderboardPage'
+import OdPage from './pages/OdPage'
 import ProfilePage from './pages/ProfilePage'
 import ReviewPage from './pages/ReviewPage'
 import StudentPage from './pages/StudentPage'
@@ -78,6 +79,7 @@ export default function App() {
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/students/:id" element={<StudentPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/od" element={<OdPage />} />
             <Route path="/claims" element={<ClaimsPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/review/:id" element={<ReviewPage />} />

@@ -39,6 +39,16 @@ export const flyerUpload = multer({
   },
 }).single('image')
 
+// One OD letter per request (field "letter"): PDF, PNG or JPG
+export const letterUpload = multer({
+  storage,
+  limits: { fileSize: config.uploads.maxBytes, files: 1, fields: 10 },
+  fileFilter: (req, file, cb) => {
+    if (TYPES[file.mimetype]) cb(null, true)
+    else cb(badRequest('The OD letter must be a PDF, PNG or JPG file.', 'bad_file_type'))
+  },
+}).single('letter')
+
 // The browser-supplied type can lie, so check the first bytes of each saved file too.
 export async function verifyFiles(files) {
   for (const f of files) {

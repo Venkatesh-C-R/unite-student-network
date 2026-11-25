@@ -1,4 +1,4 @@
-import { Award, ClipboardCheck, LogOut, Megaphone, Moon, Search, ShieldCheck, Sun, Trophy, User, Users } from 'lucide-react'
+import { Award, ClipboardCheck, FileSignature, LogOut, Megaphone, Moon, Search, ShieldCheck, Sun, Trophy, User, Users } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { homeFor, useAuth } from '../../context'
@@ -12,12 +12,14 @@ const STUDENT_NAV = [
   ['/flyers', 'Flyers', Megaphone],
   ['/discover', 'Discover', Search],
   ['/claims', 'Claims', Award],
+  ['/od', 'OD', FileSignature],
   ['/leaderboard', 'Leaderboard', Trophy],
   ['/profile', 'Profile', User],
 ]
 // Faculty and admins review claims instead of submitting them
 const STAFF_NAV = [
   ['/review', 'Review', ClipboardCheck],
+  ['/od', 'OD', FileSignature],
   ['/groups', 'Unions', Users],
   ['/flyers', 'Flyers', Megaphone],
   ['/discover', 'Discover', Search],

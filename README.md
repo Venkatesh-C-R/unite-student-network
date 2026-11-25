@@ -2,7 +2,9 @@
 
 UNITE stands for University Network for Interdisciplinary Teamwork and Engagement. It's a site for PSG Tech students who want to team up with people outside their own department.
 
-Students form a union, which is a team of up to six with at most one person from each programme. The union enters events together. When it wins or places somewhere, it claims the result and uploads proof, and a faculty member checks it. Verified results earn points, and every union shows up on one shared leaderboard.
+Students form a union, which is a team of up to six with at most one person from each programme. The union enters events together. When it wins or places somewhere, it claims the result and uploads proof, and a faculty member checks it. Verified results earn points, and every union shows up on one shared leaderboard. Students can also claim results from events they took part in on their own; those points go on a separate solo leaderboard of students.
+
+Students can also send on-duty (OD) requests: they upload the OD letter and send it to their HOD, tutor or other faculty by email, and it is approved once every one of them accepts.
 
 The code is in two parts:
 
@@ -66,9 +68,10 @@ The landing page is only for visitors who aren't signed in. Once you sign in, st
 
 | Email | Who it is |
 |---|---|
-| `26dm001@psgtech.ac.in` | Aarav, who leads Team Nova. This account has a join request waiting for approval and an open poll, and can submit claims. |
+| `26dm001@psgtech.ac.in` | Aarav, who leads Team Nova. This account has a join request waiting for approval and an open poll, can submit claims, has verified and pending solo claims, and has OD requests. |
 | `26dm002@psgtech.ac.in` to `26dm012@psgtech.ac.in` | More students. Some are in Team Nova, Circuit Breakers or Bio Bytes, and some haven't joined a union yet. |
-| `demo.faculty@psgtech.ac.in` | A faculty member with two claims waiting for review, certificates attached. |
+| `demo.faculty@psgtech.ac.in` | A faculty member with two union claims and two solo claims waiting for review, certificates attached, and two OD requests to decide. |
+| `demo.hod@psgtech.ac.in` | A second faculty member (an HOD). Aarav's OD request for the hackathon finals is waiting for both Demo Faculty and Demo HOD. |
 | `demo.admin@psgtech.ac.in` | The admin, who can see reports, manage users, read the activity log and undo decisions. |
 
 To reset the demo data, run `npm run seed:demo` in `backend/`. It won't run in production or against the test database.
