@@ -102,7 +102,13 @@ cd /opt/unite/backend && sudo -u unite npm ci --omit=dev
 cd /opt/unite/frontend && sudo -u unite npm ci && sudo -u unite npm run build
 ```
 
-Create `/opt/unite/backend/.env` (owner `unite`, mode 600). **Never commit this file.**
+Create `/opt/unite/backend/.env` so that only the `unite` user can read it. **Never commit this file, and never put a secret in a `VITE_` variable:** Vite copies every `VITE_` value into the website files that every visitor downloads. All keys stay in this backend file.
+
+```bash
+sudo install -o unite -g unite -m 600 /dev/null /opt/unite/backend/.env
+sudo -u unite nano /opt/unite/backend/.env
+```
+
 
 ```ini
 NODE_ENV=production
@@ -149,6 +155,16 @@ sudo certbot --nginx -d unite.psgtech.ac.in   # HTTPS, renews itself
 ```
 
 HTTPS is required: in production the sign-in cookie is only sent over HTTPS.
+
+Check that no secret is public. Each of these should print `404` (or no match for the last one):
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://unite.psgtech.ac.in/.env
+curl -s -o /dev/null -w '%{http_code}\n' https://unite.psgtech.ac.in/.git/config
+grep -rEi 'xkeysib-|SMTP_PASS|SESSION_SECRET|API_KEY' /opt/unite/frontend/dist || echo 'no secrets in the website files'
+```
+
+If a key or password ever leaks, delete it at the provider and make a new one (rotate it). Removing it from the code isn't enough, because someone may already have copied it.
 
 ## 7. Backups
 
