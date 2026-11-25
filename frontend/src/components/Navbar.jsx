@@ -1,6 +1,5 @@
 import { Menu, Moon, Sun, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import { scrollToId } from '../hooks/useLenis'
 import { Logo } from './ui'
 
@@ -15,7 +14,7 @@ const LINKS = [
 ]
 
 // One banner-red bar: logo, section links, then theme and sign-in on the right.
-export default function Navbar({ theme, onToggleTheme, onSignIn, user, onSignOut }) {
+export default function Navbar({ theme, onToggleTheme, onSignIn }) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState('')
 
@@ -70,20 +69,9 @@ export default function Navbar({ theme, onToggleTheme, onSignIn, user, onSignOut
             <button onClick={onToggleTheme} className={`${pill} hover:bg-white/15`} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            {user ? (
-              <>
-                <button onClick={onSignOut} className={`${pill} hidden hover:bg-white/15 sm:block`}>
-                  Sign out
-                </button>
-                <Link to="/groups" className={`${pill} bg-[#fffaf0] text-[#9a1916] hover:bg-white`}>
-                  My union
-                </Link>
-              </>
-            ) : (
-              <button onClick={onSignIn} className={`${pill} bg-[#fffaf0] text-[#9a1916] hover:bg-white`}>
-                Sign in
-              </button>
-            )}
+            <button onClick={onSignIn} className={`${pill} bg-[#fffaf0] text-[#9a1916] hover:bg-white`}>
+              Sign in
+            </button>
             <button
               className="grid h-10 w-10 place-items-center rounded-md border border-white/30 lg:hidden"
               onClick={() => setOpen((o) => !o)}
@@ -105,13 +93,6 @@ export default function Navbar({ theme, onToggleTheme, onSignIn, user, onSignOut
               </button>
             </li>
           ))}
-          {user && (
-            <li className="sm:hidden">
-              <button onClick={onSignOut} className="block w-full py-3 text-left font-semibold text-[#fffaf0]/80 hover:text-[#fffaf0]">
-                Sign out
-              </button>
-            </li>
-          )}
         </ul>
       )}
     </header>

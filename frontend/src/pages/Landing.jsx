@@ -36,7 +36,7 @@ function shouldShowLoader() {
 
 export default function Landing({ theme, onToggleTheme }) {
   const [loading, setLoading] = useState(shouldShowLoader)
-  const { user, signOut, openSignIn } = useAuth()
+  const { openSignIn } = useAuth()
   const done = useCallback(() => setLoading(false), [])
 
   useLenis(!loading)
@@ -52,7 +52,7 @@ export default function Landing({ theme, onToggleTheme }) {
           >
             Skip to content
           </a>
-          <Navbar theme={theme} onToggleTheme={onToggleTheme} onSignIn={openSignIn} user={user} onSignOut={signOut} />
+          <Navbar theme={theme} onToggleTheme={onToggleTheme} onSignIn={openSignIn} />
           <main id="main">
             <Hero onSignIn={openSignIn} />
             <About />

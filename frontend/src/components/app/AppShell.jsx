@@ -1,7 +1,7 @@
 import { Award, ClipboardCheck, LogOut, Megaphone, Moon, Search, ShieldCheck, Sun, Trophy, User, Users } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
-import { useAuth } from '../../context'
+import { homeFor, useAuth } from '../../context'
 import { Logo } from '../ui'
 import { Avatar, Skeleton } from './kit'
 import { btn } from '../../lib/styles'
@@ -49,7 +49,7 @@ export default function AppShell({ theme, onToggleTheme }) {
       <header className="sticky top-0 z-40 border-b border-line bg-surface">
         <div className="h-1 bg-violet-500" />
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link to="/" className="flex items-center gap-2" aria-label="UNITE home">
+          <Link to={user ? homeFor(user) : '/'} className="flex items-center gap-2" aria-label="UNITE home">
             <Logo size={30} />
             <span className="wordmark text-lg font-bold">UNITE</span>
           </Link>
