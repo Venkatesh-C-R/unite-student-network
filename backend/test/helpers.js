@@ -1,4 +1,5 @@
 import request from 'supertest'
+import sharp from 'sharp'
 import { setupDatabase } from '../scripts/setup-db.js'
 import { createApp } from '../src/app.js'
 import { config } from '../src/config.js'
@@ -60,3 +61,6 @@ export const P = {
 
 // A tiny valid PDF for evidence uploads
 export const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n')
+
+// A small real PNG (uploaded photos are decoded and re-encoded, so a bare signature is not enough)
+export const PNG = await sharp({ create: { width: 40, height: 30, channels: 3, background: '#c0392b' } }).png().toBuffer()

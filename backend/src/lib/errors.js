@@ -27,7 +27,7 @@ export function errorHandler(err, req, res, next) {
     return res.status(err.status).json({ error: err.code, message: err.message })
   }
   if (err?.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ error: 'file_too_large', message: 'Each file must be 5 MB or smaller.' })
+    return res.status(400).json({ error: 'file_too_large', message: 'Photos can be up to 10 MB and PDFs up to 3 MB.' })
   }
   if (err?.code === 'LIMIT_FILE_COUNT' || err?.code === 'LIMIT_UNEXPECTED_FILE') {
     return res.status(400).json({ error: 'too_many_files', message: 'Upload at most 5 evidence files, or one flyer image or OD letter.' })

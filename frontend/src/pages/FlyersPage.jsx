@@ -6,6 +6,7 @@ import { api } from '../api'
 import { Avatar, Dialog, Empty, Skeleton } from '../components/app/kit'
 import { useAuth, useToast } from '../context'
 import { timeAgo } from '../lib/format'
+import { IMAGE_HINT, IMAGE_TYPES, fileProblem } from '../lib/files'
 import { btn, input } from '../lib/styles'
 
 const EMPTY_FORM = { title: '', eventDate: '', link: '', details: '' }
@@ -22,8 +23,8 @@ function PostFlyer({ open, onClose, onPosted }) {
 
   function pick(f) {
     if (!f) return
-    if (!['image/png', 'image/jpeg'].includes(f.type)) return toast('Choose a PNG or JPG photo of the flyer.', 'error')
-    if (f.size > 5 * 1024 * 1024) return toast('The photo must be 5 MB or smaller.', 'error')
+    const problem = fileProblem(f, IMAGE_TYPES)
+    if (problem) return toast(problem, 'error')
     if (preview) URL.revokeObjectURL(preview)
     setFile(f)
     setPreview(URL.createObjectURL(f))
@@ -78,7 +79,7 @@ function PostFlyer({ open, onClose, onPosted }) {
             <span className="flex flex-col items-center px-4 py-8">
               <ImagePlus size={26} className="mb-2 text-violet-500" />
               <b>Drop a photo of the flyer here</b>
-              <span className="mt-1 text-xs text-muted">or click to choose · PNG or JPG · up to 5 MB</span>
+              <span className="mt-1 text-xs text-muted">or click to choose · {IMAGE_HINT}</span>
             </span>
           )}
           <input ref={fileInput} type="file" accept=".png,.jpg,.jpeg" hidden onChange={(e) => (pick(e.target.files[0]), (e.target.value = ''))} />
