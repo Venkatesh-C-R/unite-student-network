@@ -64,7 +64,7 @@ Do **not** open port 3306 (MySQL) or 4000 (API). Only nginx should be reachable 
 ```bash
 ssh ubuntu@<server IP>
 sudo apt update && sudo apt -y upgrade
-sudo apt -y install nginx mysql-server git certbot python3-certbot-nginx
+sudo apt -y install nginx mysql-server git rsync certbot python3-certbot-nginx
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt -y install nodejs
 sudo useradd --system --create-home --home-dir /var/lib/unite --shell /usr/sbin/nologin unite
@@ -147,6 +147,7 @@ sudo cp /opt/unite/deploy/unite-api.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now unite-api
 curl -s localhost:4000/api/health          # {"ok":true}
 
+sudo cp /opt/unite/deploy/nginx-security-headers.conf /etc/nginx/snippets/unite-security-headers.conf
 sudo cp /opt/unite/deploy/nginx-unite.conf /etc/nginx/sites-available/unite
 sudo sed -i 's/unite.example.org/unite.psgtech.ac.in/' /etc/nginx/sites-available/unite
 sudo ln -s /etc/nginx/sites-available/unite /etc/nginx/sites-enabled/ && sudo rm -f /etc/nginx/sites-enabled/default
@@ -173,7 +174,18 @@ sudo cp /opt/unite/deploy/backup.sh /usr/local/bin/unite-backup && sudo chmod 70
 sudo crontab -e      # add:  30 2 * * * /usr/local/bin/unite-backup
 ```
 
-This keeps 14 days of database dumps and uploads in `/var/backups/unite`. Copy one off the server now and then, for example with `scp`, or use Oracle's free volume backups.
+This keeps 14 days of database dumps and uploads in `/var/backups/unite`. Uploads are saved as one folder per day (`uploads/YYYY-MM-DD`), but a file that hasn't changed is not copied again: rsync hard-links it to the day before. So 14 days of backups take about the space of **one** copy of the uploads plus the files added in those days. Photos and PDFs don't compress, so 14 full copies would need 14 times the space and fill the disk early.
+
+Uploads stay small: photos are shrunk to about 0.5–1 MB each when they arrive and PDFs are capped at 3 MB, so about 0.8 MB per file on average. With the uploads and their backups on one disk, keep the uploads under about half of the free space (for example about 90 GB, roughly 100,000 files, on Oracle's 200 GB) and watch `df -h`.
+
+To restore:
+
+```bash
+sudo rsync -a /var/backups/unite/uploads/<YYYY-MM-DD>/ /var/lib/unite/uploads/
+gunzip -c /var/backups/unite/unite-db-<YYYY-MM-DD>.sql.gz | sudo mysql unite
+```
+
+These backups are on the same server, so they don't survive losing the server. Copy one off the server now and then (for example with `scp` or `rsync` to another machine), or use Oracle's free volume backups.
 
 ## 8. Updating later
 

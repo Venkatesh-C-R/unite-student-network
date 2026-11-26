@@ -1,0 +1,98 @@
+# Runs on every pull request and every push to main:
+#   1. Secret scan of the whole git history (gitleaks)
+#   2. Backend tests against a throwaway MySQL database
+#   3. Frontend lint and build, then a check that no secret ended up in the built website
+# No real secret is used here: the test settings below are made up and only live for the run.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan every commit for keys and passwords
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.3 \
+            git /repo --redact --no-banner --exit-code 1
+
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-root
+          MYSQL_DATABASE: unite_test
+          MYSQL_USER: unite_ci
+          MYSQL_PASSWORD: ci-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-only-root"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Write throwaway test settings
+        run: |
+          {
+            echo "NODE_ENV=test"
+            echo "APP_ORIGIN=http://localhost:5173"
+            echo "SESSION_SECRET=$(openssl rand -hex 32)"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_USER=unite_ci"
+            echo "DB_PASSWORD=ci-only-password"
+            echo "DB_NAME=unite_test"
+            echo "MAIL_PROVIDER=console"
+            echo "UPLOAD_DIR=test/uploads-tmp"
+          } > .env.test
+      - run: npm test
+
+  frontend:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - name: No secrets in the built website
+        # Vite copies every VITE_ variable into these files, which every visitor downloads
+        run: |
+          if grep -rEn 'xkeysib-|re_[A-Za-z0-9]{20}|sk-[A-Za-z0-9]{20}|sk_live_|SESSION_SECRET|SMTP_PASS|DB_PASSWORD|API_KEY' dist; then
+            echo "::error::A secret-looking value is in frontend/dist. Keep keys in backend/.env, never in VITE_ variables."
+            exit 1
+          fi
+          echo "No secrets found in dist"
