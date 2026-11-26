@@ -54,7 +54,10 @@ export const config = {
   demoEmail: /^(26dm\d{3}|demo\.faculty|demo\.hod|demo\.admin)@psgtech\.ac\.in$/i,
   uploads: {
     dir: process.env.UPLOAD_DIR || 'uploads',
-    maxBytes: 5 * 1024 * 1024,
+    // Photos may be large when uploaded (phone cameras); the server shrinks them before saving.
+    // PDFs are stored as they are, so they have a lower limit.
+    maxImageBytes: 10 * 1024 * 1024,
+    maxPdfBytes: 3 * 1024 * 1024,
     maxFiles: 5,
   },
 }

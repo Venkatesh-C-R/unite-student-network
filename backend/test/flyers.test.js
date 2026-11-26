@@ -5,7 +5,7 @@ import { after, before, test } from 'node:test'
 import request from 'supertest'
 import { pool } from '../src/db.js'
 import { uploadDir } from '../src/lib/uploads.js'
-import { P, PDF, signedIn, startApp, stopApp } from './helpers.js'
+import { P, PDF, PNG, signedIn, startApp, stopApp } from './helpers.js'
 
 let app
 before(async () => {
@@ -13,8 +13,6 @@ before(async () => {
 })
 after(() => stopApp(app))
 
-// A file that starts with the PNG signature (all the server checks)
-const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)])
 
 function post(user, fields = {}, image = PNG, type = 'image/png') {
   const req = user.agent.post('/api/flyers')

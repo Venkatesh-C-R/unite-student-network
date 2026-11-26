@@ -5,11 +5,10 @@ import { api } from '../api'
 import { Dialog, Empty, Skeleton } from '../components/app/kit'
 import { useAuth, useToast } from '../context'
 import { timeAgo } from '../lib/format'
+import { DOC_HINT, fileProblem } from '../lib/files'
 import { btn, input } from '../lib/styles'
 
 const MAX_FACULTY = 5
-const MAX_BYTES = 5 * 1024 * 1024
-const TYPES = ['application/pdf', 'image/png', 'image/jpeg']
 
 const STATUS = {
   pending: { label: 'Waiting for approval', icon: Clock, cls: 'bg-amber-400/15 text-amber-500' },
@@ -190,8 +189,8 @@ function RequestDialog({ open, onClose, onSent }) {
   function pick(file) {
     setError('')
     if (!file) return
-    if (!TYPES.includes(file.type)) setError(`"${file.name}" is not a PDF, PNG or JPG.`)
-    else if (file.size > MAX_BYTES) setError(`"${file.name}" is larger than 5 MB.`)
+    const problem = fileProblem(file)
+    if (problem) setError(problem)
     else setLetter(file)
   }
 
@@ -287,7 +286,7 @@ function RequestDialog({ open, onClose, onSent }) {
               <span>
                 <b>Drop the letter here</b> or click to choose
               </span>
-              <span className="mt-1 text-xs text-muted">PDF, PNG or JPG · 5 MB at most</span>
+              <span className="mt-1 text-xs text-muted">{DOC_HINT}</span>
             </button>
           )}
           <input ref={fileInput} type="file" accept=".pdf,.png,.jpg,.jpeg" hidden onChange={(e) => (pick(e.target.files[0]), (e.target.value = ''))} />

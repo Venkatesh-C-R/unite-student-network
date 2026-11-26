@@ -83,7 +83,7 @@ flyersRouter.post('/', flyerUpload, async (req, res) => {
       })
       .parse(req.body)
     if (!file) throw badRequest('Add a photo of the flyer.', 'image_required')
-    await verifyFiles([file])
+    await verifyFiles([file], 'flyer')
     const [r] = await pool.query(
       'INSERT INTO flyer (author_id, title, details, event_date, link, image_name, image_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [req.user.id, body.title, body.details, body.eventDate ?? null, body.link ?? null, file.filename, file.mimetype],

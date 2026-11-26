@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
 import { pool } from '../src/db.js'
-import { P, PDF, signedIn, startApp, stopApp } from './helpers.js'
+import { P, PDF, PNG, signedIn, startApp, stopApp } from './helpers.js'
 
 let app
 before(async () => {
@@ -9,7 +9,6 @@ before(async () => {
 })
 after(() => stopApp(app))
 
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])
 
 async function newEvent(a, hostCategory = 'state') {
   const r = await a.post('/api/events').send({ title: `Solo Contest ${Math.random()}`, hostInstitution: 'Anna University', hostCategory })

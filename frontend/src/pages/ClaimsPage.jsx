@@ -9,12 +9,11 @@ import { useAuth, useToast } from '../context'
 import { HOST_CATEGORIES, POSITIONS } from '../data'
 import { CATEGORY_ICON } from '../lib/claims'
 import { formatPoints } from '../lib/format'
+import { DOC_HINT, fileProblem } from '../lib/files'
 import { btn, input } from '../lib/styles'
 
 const RESULTS = POSITIONS.map((p) => ({ ...p, value: p.key === 'p' ? 'participation' : p.key }))
 const MAX_FILES = 5
-const MAX_BYTES = 5 * 1024 * 1024
-const TYPES = ['application/pdf', 'image/png', 'image/jpeg']
 
 function Steps({ step, labels }) {
   return (
@@ -328,8 +327,8 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
     setError('')
     const next = [...files]
     for (const f of list) {
-      if (!TYPES.includes(f.type)) setError(`"${f.name}" is not a PDF, PNG or JPG.`)
-      else if (f.size > MAX_BYTES) setError(`"${f.name}" is larger than 5 MB.`)
+      const problem = fileProblem(f)
+      if (problem) setError(problem)
       else if (next.length >= MAX_FILES) setError('You can attach up to 5 files.')
       else if (!next.some((x) => x.name === f.name && x.size === f.size)) next.push(f)
     }
@@ -410,7 +409,7 @@ function ResultStep({ event, team, onBack, onSubmitted }) {
           <span>
             <b>Drop files here</b> or click to choose
           </span>
-          <span className="mt-1 text-xs text-muted">PDF, PNG or JPG · up to 5 files · 5 MB each</span>
+          <span className="mt-1 text-xs text-muted">{DOC_HINT} · up to 5 files</span>
           <input ref={fileInput} type="file" accept=".pdf,.png,.jpg,.jpeg" multiple hidden onChange={(e) => (addFiles(e.target.files), (e.target.value = ''))} />
         </div>
         {files.length > 0 && (
