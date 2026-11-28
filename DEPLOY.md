@@ -13,6 +13,8 @@ student's browser ──HTTPS──► nginx ──► website files (frontend/d
                                              └──► uploads in /var/lib/unite/uploads
 ```
 
+> Using **Azure for Students** instead of Oracle? Follow [DEPLOY-AZURE.md](DEPLOY-AZURE.md); it reuses steps 5–8 of this guide.
+
 ## What the free services give you
 
 | Need | Service | Free allowance | Enough for 12,000 students? |

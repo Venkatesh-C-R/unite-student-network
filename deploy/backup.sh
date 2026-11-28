@@ -2,7 +2,7 @@
 # Nightly backup of the UNITE database and uploaded files, keeping the last 14 days.
 # Install: sudo cp deploy/backup.sh /usr/local/bin/unite-backup && sudo chmod 700 /usr/local/bin/unite-backup
 # Schedule (as root, crontab -e):   30 2 * * * /usr/local/bin/unite-backup
-# MySQL login comes from /root/.my.cnf (see DEPLOY.md), so no password appears here.
+# MySQL login comes from /root/.my.cnf (see DEPLOY.md or DEPLOY-AZURE.md), so no password appears here.
 #
 # Uploads are backed up as one folder per day. A file that has not changed since the day before is
 # not copied again: rsync hard-links it to yesterday's copy. So 14 days of backups take about the
@@ -21,7 +21,7 @@ mkdir -p "$DEST/uploads"
 chmod 700 "$DEST"
 
 # Database (small, so a full compressed dump each night)
-mysqldump --single-transaction --routines --triggers unite | gzip > "$DEST/unite-db-$STAMP.sql.gz"
+mysqldump --single-transaction --routines --triggers --no-tablespaces unite | gzip > "$DEST/unite-db-$STAMP.sql.gz"
 ls -1 "$DEST"/unite-db-*.sql.gz | sort | head -n -"$KEEP" | xargs -r rm -f
 
 # Uploads: today's folder, sharing unchanged files with the latest earlier one

@@ -78,7 +78,7 @@ To reset the demo data, run `npm run seed:demo` in `backend/`. It won't run in p
 
 ## Putting it online
 
-[DEPLOY.md](DEPLOY.md) explains how to host UNITE for free for up to about 12,000 students. The website, API and database all run on one Oracle Cloud Always Free server. Sign-in emails go out through a college Google Workspace account, with Brevo as a backup. The config files for this are in [`deploy/`](deploy/).
+[DEPLOY.md](DEPLOY.md) explains how to host UNITE for free for up to about 12,000 students. The website, API and database all run on one Oracle Cloud Always Free server. Sign-in emails go out through a college Google Workspace account, with Brevo as a backup. The config files for this are in [`deploy/`](deploy/). To start on **Azure for Students** instead (no card needed, about a year free, managed MySQL), follow [DEPLOY-AZURE.md](DEPLOY-AZURE.md).
 
 The nginx config only serves the built website, returns 404 for hidden files such as `/.env`, and sends security headers (Content-Security-Policy, HSTS, no framing) from [`deploy/nginx-security-headers.conf`](deploy/nginx-security-headers.conf). Keys and passwords live only in `backend/.env` on the server. Never put a secret in a `VITE_` variable, because Vite copies those into the website files every visitor downloads.
 

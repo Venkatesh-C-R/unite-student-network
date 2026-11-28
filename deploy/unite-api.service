@@ -5,8 +5,9 @@
 
 [Unit]
 Description=UNITE API (Node.js)
-After=network.target mysql.service
-Requires=mysql.service
+# Wants (not Requires): works with MySQL on this server or a managed database such as Azure's
+After=network-online.target mysql.service
+Wants=network-online.target mysql.service
 
 [Service]
 Type=simple
