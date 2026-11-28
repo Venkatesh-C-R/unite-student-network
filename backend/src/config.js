@@ -29,6 +29,9 @@ export const config = {
     user: required('DB_USER'),
     password: process.env.DB_PASSWORD || '',
     database: required('DB_NAME'),
+    // DB_SSL=true encrypts the connection and checks the server's certificate (needed for a managed
+    // database such as Azure Database for MySQL; not needed when MySQL runs on the same server)
+    ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {}),
   },
   mail: {
     // One provider, or several separated by commas to try in order, e.g. "smtp,brevo":
